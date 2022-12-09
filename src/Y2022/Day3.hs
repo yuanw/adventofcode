@@ -41,7 +41,7 @@ shareItems' :: (Rucksack, Rucksack, Rucksack) -> Rucksack
 shareItems' (f, s, t) = foldr (\x y -> if x `elem` s && x `elem` t && notElem x y then x : y else y) "" f
 
 solution2 :: String -> Int
-solution2 = sum . map (foldr (\x y -> fromMaybe 0 (Map.lookup x priorityMap) + y) 0 .  shareItems' ). splitPart2 . lines
+solution2 = sum . map (foldr (\x y -> fromMaybe 0 (Map.lookup x priorityMap) + y) 0 . shareItems') . splitPart2 . lines
 
 partI :: IO Int
 partI = solution1 <$> readFile "data/2022/day3.txt"

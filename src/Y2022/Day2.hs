@@ -9,15 +9,15 @@ data Move = Rock | Paper | Scissors deriving (Eq, Read, Show, Enum, Bounded)
 
 data Outcome = Lose | Tie | Win deriving (Show, Eq, Ord, Enum, Bounded)
 
--- | @outcome our_move their_move@
--- outcome :: Move -> Move -> Outcome
--- outcome Rock Scissors = Win
--- outcome Paper Rock = Win
--- outcome Scissors Paper = Win
--- outcome us them
---     | us == them = Tie
---     | otherwise = Lose
-
+{- | @outcome our_move their_move@
+ outcome :: Move -> Move -> Outcome
+ outcome Rock Scissors = Win
+ outcome Paper Rock = Win
+ outcome Scissors Paper = Win
+ outcome us them
+     | us == them = Tie
+     | otherwise = Lose
+-}
 outcome' :: Move -> Move -> Outcome
 outcome' mine their = toEnum ((fromEnum mine - fromEnum their + 1) `mod` 3)
 
