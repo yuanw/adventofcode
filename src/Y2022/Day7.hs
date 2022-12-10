@@ -34,17 +34,17 @@ outputsParser :: Parser [Output]
 outputsParser = many (outputParser <* endOfLine   )
 
 empty :: Zipper
-empty = (Directory "/" [], [FSCrumb "/" [] []])
+empty = (Directory "/" [], [])
 
 test :: IO ()
 test = do
 
-    -- input <- readFile "data/2022/day7-test.txt"
-    -- let outputs = fromRight [] $ parseOnly outputsParser $ T.pack input
-    --     tree =  foldl buildTree empty (tail outputs)
-    -- print tree
-    let tree = foldl buildTree (Directory "a" [], [FSCrumb "/" [] []]) [ FL 14 "b.txt", FL 85 "c.dat", Dir "d" , CD "a", LS ] --, Dir "e"]
+    input <- readFile "data/2022/day7-test.txt"
+    let outputs = fromRight [] $ parseOnly outputsParser $ T.pack input
+        tree =  foldl buildTree empty (tail outputs)
     print tree
+    -- let tree = foldl buildTree (Directory "/" [], []) [ LS, Dir "a", FL 14 "b.txt", FL 85 "c.dat", Dir "d" , CD "a", LS , Dir "e"]
+    -- print tree
     -- print $ parseOnly outputParser "$ cd /"
     -- print $ parseOnly outputParser "$ ls"
     -- print $ parseOnly outputParser "14779 cmss"
@@ -54,14 +54,14 @@ test = do
 
 buildTree :: Zipper ->  Output -> Zipper
 buildTree z LS = z
-buildTree (item , FSCrumb name ls rs : bs) (Dir folderName) = (Directory folderName [], FSCrumb name (ls ++ [item]) rs  :bs)
-buildTree (item, FSCrumb name ls rs : bs) (FL size fileName) = (File fileName size, FSCrumb name (ls ++ [item]) rs : bs)
+buildTree (Directory name items , bs) (Dir folderName) = (Directory name $ items ++ [Directory folderName []], bs)
+buildTree (Directory name items,  bs) (FL size fileName) = (Directory name $ items ++ [File fileName size] , bs)
 buildTree z (CD "..") = goUp z
 buildTree z (CD name) = goTo name z
 buildTree _ _ = error ""
 
 goTo :: String -> Zipper -> Zipper
-goTo name (item, FSCrumb folderName ls rs : bs) = let (ls', rs') = break (nameIs name) (ls ++ (item : rs)) in (head rs', FSCrumb name ls' (tail rs') : FSCrumb folderName ls rs : bs)
+goTo name (Directory folderName items , bs) = let (ls', rs') = break (nameIs name) items in (head rs', FSCrumb folderName ls' (tail rs')  : bs)
 
 goUp :: Zipper -> Zipper
 goUp (item, FSCrumb name ls rs : bs) = (Directory name (ls ++ item : rs), bs)
@@ -71,5 +71,5 @@ nameIs name (Directory folderName _) = name == folderName
 nameIs name (File fileName _ ) = name == fileName
 
 topMost :: Zipper -> FileSystem
-topMost (item, [ FSCrumb name ls rs  ]) = Directory name (ls ++ item : rs)
+topMost (item, [  ]) = item
 topMost z = topMost ( goUp z)
