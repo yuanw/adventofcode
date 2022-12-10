@@ -8,7 +8,7 @@ data FileSystem = Directory {   _dName :: String, _content :: [FileSystem] } | F
 
 getSize :: FileSystem -> Int
 getSize (File _ s ) = s
-getSize (Directory _ [] _ ) = 0
+getSize (Directory _ []  ) = 0
 getSize (Directory n (x:xs)  ) = getSize x + getSize (Directory n xs  )
 
 data Output = CD String | LS | Dir String | FL Int String deriving Show
@@ -48,9 +48,9 @@ test = do
     -- print $ parseOnly outputParser "270744 mglrchsr"
 
 -- zipper left maybe directory ,
-buildTree :: Zipper ->  Output -> Zipper
-buildTree (Zipper [] []) (CD n) = Zipper [Directory n [] ] []
-buildTree z LS = z
-buildTree (Zipper dirs items) (Dir n) = Zipper dirs (Directory n []  : items )
-buildTree (Zipper dirs items) (FL s n) = Zipper dirs (File n s  : items )
-buildTree (Zipper (Directory n' item' :xs) items) (CD n) =
+-- buildTree :: Zipper ->  Output -> Zipper
+-- buildTree (Zipper [] []) (CD n) = Zipper [Directory n [] ] []
+-- buildTree z LS = z
+-- buildTree (Zipper dirs items) (Dir n) = Zipper dirs (Directory n []  : items )
+-- buildTree (Zipper dirs items) (FL s n) = Zipper dirs (File n s  : items )
+-- buildTree (Zipper (Directory n' item' :xs) items) (CD n) =
