@@ -16,6 +16,7 @@ import Data.Attoparsec.Text (
  )
 import Data.Either (fromRight)
 import Data.Text qualified as T
+import Control.Monad (join)
 
 data FileSystem = Directory {_dName :: String, _content :: [FileSystem]} | File {_fName :: String, _size :: Int} deriving stock (Show)
 
@@ -52,16 +53,19 @@ test = do
     input <- readFile "data/2022/day7.txt"
     let outputs = fromRight [] $ parseOnly outputsParser $ T.pack input
         tree = foldl buildTree empty (tail outputs)
-    print . atMost 100000 $ topMost tree
+        root = topMost tree
+        f = freeSpace root
+    print f
+    -- this feel so dirty
+    print . minimum $ [ s | d <- getDeFolder root , let s = getSize d, s >= f  ]
 
--- let tree = foldl buildTree (Directory "/" [], []) [ LS, Dir "a", FL 14 "b.txt", FL 85 "c.dat", Dir "d" , CD "a", LS , Dir "e"]
--- print tree
--- print $ parseOnly outputParser "$ cd /"
--- print $ parseOnly outputParser "$ ls"
--- print $ parseOnly outputParser "14779 cmss"
--- print $ parseOnly outputParser "dir ctctt"
--- print $ parseOnly outputParser "101350 gpbswq.njr"
--- print $ parseOnly outputParser "270744 mglrchsr"
+freeSpace :: FileSystem -> Int
+freeSpace  = (30000000 -) . (70000000 -) .  getSize
+
+getDeFolder :: FileSystem -> [FileSystem]
+getDeFolder (File _ _) = []
+getDeFolder d@(Directory _ cs) = d :  join [getDeFolder c | c <- cs]
+
 
 buildTree :: Zipper -> Output -> Zipper
 buildTree z LS = z
