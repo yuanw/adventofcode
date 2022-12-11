@@ -42,7 +42,7 @@ test = do
     input <- readFile "data/2022/day7.txt"
     let outputs = fromRight [] $ parseOnly outputsParser $ T.pack input
         tree =  foldl buildTree empty (tail outputs)
-    print . (atMost 100000) $ topMost tree
+    print . atMost 100000 $ topMost tree
     -- let tree = foldl buildTree (Directory "/" [], []) [ LS, Dir "a", FL 14 "b.txt", FL 85 "c.dat", Dir "d" , CD "a", LS , Dir "e"]
     -- print tree
     -- print $ parseOnly outputParser "$ cd /"
@@ -83,5 +83,5 @@ getSubFolder (File _ _) = []
 getSubFolder (Directory _ children) = [i | i <- children , isFolder i]
 
 atMost :: Int  -> FileSystem -> Int
-atMost limit (File _ _) = 0
-atMost limit d = (if getSize d <= limit then (getSize d) else 0) + (sum $ map (atMost limit ) (getSubFolder d))
+atMost _ (File _ _) = 0
+atMost limit d = (if getSize d <= limit then getSize d else 0) + sum ( map ( atMost limit )) (getSubFolder d))
