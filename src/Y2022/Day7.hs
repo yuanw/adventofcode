@@ -39,7 +39,7 @@ empty = (Directory "/" [], [])
 test :: IO ()
 test = do
 
-    input <- readFile "data/2022/day7-test.txt"
+    input <- readFile "data/2022/day7.txt"
     let outputs = fromRight [] $ parseOnly outputsParser $ T.pack input
         tree =  foldl buildTree empty (tail outputs)
     print . (atMost 100000) $ topMost tree
