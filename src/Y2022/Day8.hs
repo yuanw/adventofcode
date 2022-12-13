@@ -30,13 +30,13 @@ isVisibleFromTop (x,y) grid = let val = get (x,y) grid in all (> val) [get (x, i
 
 
 isVisibleFromRight :: Point -> Grid -> Bool
-isVisibleFromRight (x,y) grid =   x == getWidth grid - 1 || let val = get (x,y) grid in all (> val) [get (i, y) grid | i <- [ x+1..getWidth grid]]
+isVisibleFromRight (x,y) grid =   x == getWidth grid - 1 || let val = get (x,y) grid in all (> val) [get (i, y) grid | i <- [ x+1..getWidth grid -1]]
 
 
 
 
 isVisibleFromBottom :: Point -> Grid -> Bool
-isVisibleFromBottom (x, y) grid =  y == getLength grid - 1 ||  let val = get (x,y) grid in all (> val) [get (i, y) grid | i <- [ x+1..getWidth grid]]
+isVisibleFromBottom (x, y) grid =  y == getLength grid - 1 ||  let val = get (x,y) grid in all (> val) [get (x,i) grid | i <- [ y +1..getWidth grid - 1]]
 
 
 
