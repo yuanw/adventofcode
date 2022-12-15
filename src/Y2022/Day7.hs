@@ -3,6 +3,7 @@
 module Y2022.Day7 where
 
 import Control.Applicative (many, (<|>))
+import Control.Monad (join)
 import Data.Attoparsec.Text (
     Parser,
     char,
@@ -16,7 +17,6 @@ import Data.Attoparsec.Text (
  )
 import Data.Either (fromRight)
 import Data.Text qualified as T
-import Control.Monad (join)
 
 data FileSystem = Directory {_dName :: String, _content :: [FileSystem]} | File {_fName :: String, _size :: Int} deriving stock (Show)
 
@@ -57,15 +57,14 @@ test = do
         f = freeSpace root
     print f
     -- this feel so dirty
-    print . minimum $ [ s | d <- getDeFolder root , let s = getSize d, s >= f  ]
+    print . minimum $ [s | d <- getDeFolder root, let s = getSize d, s >= f]
 
 freeSpace :: FileSystem -> Int
-freeSpace  = (30000000 -) . (70000000 -) .  getSize
+freeSpace = (30000000 -) . (70000000 -) . getSize
 
 getDeFolder :: FileSystem -> [FileSystem]
 getDeFolder (File _ _) = []
-getDeFolder d@(Directory _ cs) = d :  join [getDeFolder c | c <- cs]
-
+getDeFolder d@(Directory _ cs) = d : join [getDeFolder c | c <- cs]
 
 buildTree :: Zipper -> Output -> Zipper
 buildTree z LS = z
