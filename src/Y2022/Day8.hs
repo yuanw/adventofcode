@@ -93,7 +93,12 @@ readInput file = map (map digitToInt) . lines <$> readFile file
 testGrid :: IO Grid
 testGrid = readInput "data/2022/day8.txt"
 
-test :: IO ()
-test = do
+partII :: IO ()
+partII = do
     grid <- testGrid
     print $ maxScore grid
+
+partI :: IO Int
+partI = do
+    grid <- testGrid
+    return $ countVisible grid
