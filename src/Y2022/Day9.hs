@@ -19,24 +19,30 @@ type Point = (Int, Int)
 
 -- head, tail
 type RopeState = (Point, Point)
+type Rope = [Point]
 
-distant :: RopeState -> Int
-distant ((hx, hy), (tx, ty)) = abs (hx - tx) `max` abs (hy - ty)
+distant :: Point -> Point -> Int
+distant (hx, hy) (tx, ty) = abs (hx - tx) `max` abs (hy - ty)
 
-follow :: RopeState -> RopeState
-follow s = if distant s < 2 then s else helper s
+follow :: Point -> Point -> Point
+follow h t = if distant h t < 2 then t else helper h t
   where
-    helper :: RopeState -> RopeState
-    helper ((hx, hy), (tx, ty)) = case (compare hx tx, compare hy ty) of
-        (EQ, GT) -> ((hx, hy), (tx, ty + 1))
-        (EQ, LT) -> ((hx, hy), (tx, ty - 1))
-        (LT, EQ) -> ((hx, hy), (tx - 1, ty))
-        (GT, EQ) -> ((hx, hy), (tx + 1, ty))
-        (GT, GT) -> ((hx, hy), (tx + 1, ty + 1))
-        (LT, LT) -> ((hx, hy), (tx - 1, ty - 1))
-        (GT, LT) -> ((hx, hy), (tx + 1, ty - 1))
-        (LT, GT) -> ((hx, hy), (tx - 1, ty + 1))
+    helper :: Point -> Point -> Point
+    helper (hx, hy) (tx, ty) = case (compare hx tx, compare hy ty) of
+        (EQ, GT) ->  (tx, ty + 1)
+        (EQ, LT) ->  (tx, ty - 1)
+        (LT, EQ) ->  (tx - 1, ty)
+        (GT, EQ) -> (tx + 1, ty)
+        (GT, GT) ->  (tx + 1, ty + 1)
+        (LT, LT) ->  (tx - 1, ty - 1)
+        (GT, LT) ->  (tx + 1, ty - 1)
+        (LT, GT) ->  (tx - 1, ty + 1)
         (_, _) -> error "incorrect comb"
+
+moveRope :: Rope -> Rope
+moveRope [] = []
+moveRope [p] = [p]
+moveRope (x:y:xs) = if distant x y < 2 then (x:y:xs) else let y' = follow x y in x: moveRope (y':xs)
 
 data Movement = R Int | U Int | L Int | D Int deriving stock (Show)
 
@@ -46,26 +52,38 @@ parserMovement = (string "R " >> R . read <$> many digit) <|> (string "U " >> U 
 movementParser :: Parser [Movement]
 movementParser = many (parserMovement <* endOfLine)
 
-move :: Movement -> RopeState -> [RopeState]
-move (R 0) _ = []
-move (R n) ((hx, hy), (tx, ty)) = let s' = follow ((hx, hy + 1), (tx, ty)) in s' : move (R (n - 1)) s'
-move (U 0) _ = []
-move (U n) ((hx, hy), (tx, ty)) = let s' = follow ((hx + 1, hy), (tx, ty)) in s' : move (U (n - 1)) s'
-move (L 0) _ = []
-move (L n) ((hx, hy), (tx, ty)) = let s' = follow ((hx, hy - 1), (tx, ty)) in s' : move (L (n - 1)) s'
-move (D 0) _ = []
-move (D n) ((hx, hy), (tx, ty)) = let s' = follow ((hx - 1, hy), (tx, ty)) in s' : move (D (n - 1)) s'
+move :: Movement -> Rope -> [Rope]
+move (R 0) r = [r]
+move (R n) r = let p = head r
+                   (hx, hy) = p
+                   r' = moveRope ( (hx, hy + 1): tail r) in r' : move (R (n - 1)) r'
+move (U 0) r = [r]
+move (U n) r = let p = head r
+                   (hx, hy) = p
+                   r' = moveRope ( (hx+1, hy): tail r) in r' : move (U (n - 1)) r'
+move (L 0) r = [r]
+move (L n) r = let p = head r
+                   (hx, hy) = p
+                   r' = moveRope ( (hx, hy-1): tail r) in r' : move (L (n - 1)) r'
 
-empty :: RopeState
-empty = ((0, 0), (0, 0))
+move (D 0) r = [r]
+move (D n) r = let p = head r
+                   (hx, hy) = p
+                   r' = moveRope ( (hx -1, hy): tail r) in r' : move (D (n - 1)) r'
+empty :: Rope
+empty = [(0, 0), (0, 0)]
 
-visited :: [Movement] -> (RopeState, [RopeState])
-visited =
+empty' :: Rope
+empty' = [(0, 0), (0, 0), (0, 0), (0, 0),(0, 0), (0, 0),(0, 0), (0, 0),(0, 0), (0, 0)]
+
+visited :: Rope -> [Movement] -> (Rope, [Point])
+visited r =
     foldl
         ( \(s, points) m ->
-            let ns = move m s in (last ns, points ++ ns)
+            let ns = move m s
+                points' = map last ns in (last ns, points ++ points')
         )
-        (empty, [empty])
+        (r, [(0,0)])
 
 -- ..##..
 -- ...##.
@@ -74,20 +92,28 @@ visited =
 -- s###..
 test :: IO ()
 test = do
-    input <- readFile "data/2022/day9.txt"
+    input <- readFile "data/2022/day9-test.txt"
     let movements = fromRight [] $ parseOnly movementParser $ T.pack input
-        -- (s, points) = visited [R 4 , U 4 , L 3, D 1, R 4, D 1, L 5, R 2]
-        (_, points) = visited movements
+        (r, points) = visited empty' [R 5 , U 8, L 8, D 3, R 17
+                                     ,D 10, L 25,U 20]
+        -- r = moveRope ((0,1): (tail empty'))
     -- print movements
-    -- print s
-    -- print $ points
-
-    print . Set.size . Set.fromList . map snd $ points
+    print r
+    print (length  r)
+    print points
+    print . Set.size . Set.fromList  $ points
 
 partI :: IO Int
 partI = do
     input <- readFile "data/2022/day9.txt"
     let movements = fromRight [] $ parseOnly movementParser $ T.pack input
         -- (s, points) = visited [R 4 , U 4 , L 3, D 1, R 4, D 1, L 5, R 2]
-        (_, points) = visited movements
-    return . Set.size . Set.fromList . map snd $ points
+        (_, points) = visited empty movements
+    return . Set.size . Set.fromList $ points
+
+partII :: IO Int
+partII = do
+    input <- readFile "data/2022/day9.txt"
+    let movements = fromRight [] $ parseOnly movementParser $ T.pack input
+        (_, points) = visited empty' movements
+    return . Set.size . Set.fromList $ points
