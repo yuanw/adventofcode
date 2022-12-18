@@ -13,7 +13,7 @@ import Data.Text qualified as T
 type Crate = Char
 type Stack = [Crate]
 type Stacks = [Stack]
-data Procedure = Procedure Int Int Int deriving stock Show
+data Procedure = Procedure Int Int Int deriving stock (Show)
 
 splitStack :: String -> String
 splitStack = head . splitOn "\n\n"
