@@ -29,20 +29,20 @@ follow h t = if distant h t < 2 then t else helper h t
   where
     helper :: Point -> Point -> Point
     helper (hx, hy) (tx, ty) = case (compare hx tx, compare hy ty) of
-        (EQ, GT) ->  (tx, ty + 1)
-        (EQ, LT) ->  (tx, ty - 1)
-        (LT, EQ) ->  (tx - 1, ty)
+        (EQ, GT) -> (tx, ty + 1)
+        (EQ, LT) -> (tx, ty - 1)
+        (LT, EQ) -> (tx - 1, ty)
         (GT, EQ) -> (tx + 1, ty)
-        (GT, GT) ->  (tx + 1, ty + 1)
-        (LT, LT) ->  (tx - 1, ty - 1)
-        (GT, LT) ->  (tx + 1, ty - 1)
-        (LT, GT) ->  (tx - 1, ty + 1)
+        (GT, GT) -> (tx + 1, ty + 1)
+        (LT, LT) -> (tx - 1, ty - 1)
+        (GT, LT) -> (tx + 1, ty - 1)
+        (LT, GT) -> (tx - 1, ty + 1)
         (_, _) -> error "incorrect comb"
 
 moveRope :: Rope -> Rope
 moveRope [] = []
 moveRope [p] = [p]
-moveRope (x:y:xs) = if distant x y < 2 then (x:y:xs) else let y' = follow x y in x: moveRope (y':xs)
+moveRope (x : y : xs) = if distant x y < 2 then (x : y : xs) else let y' = follow x y in x : moveRope (y' : xs)
 
 data Movement = R Int | U Int | L Int | D Int deriving stock (Show)
 
@@ -54,36 +54,44 @@ movementParser = many (parserMovement <* endOfLine)
 
 move :: Movement -> Rope -> [Rope]
 move (R 0) r = [r]
-move (R n) r = let p = head r
-                   (hx, hy) = p
-                   r' = moveRope ( (hx, hy + 1): tail r) in r' : move (R (n - 1)) r'
+move (R n) r =
+    let p = head r
+        (hx, hy) = p
+        r' = moveRope ((hx, hy + 1) : tail r)
+     in r' : move (R (n - 1)) r'
 move (U 0) r = [r]
-move (U n) r = let p = head r
-                   (hx, hy) = p
-                   r' = moveRope ( (hx+1, hy): tail r) in r' : move (U (n - 1)) r'
+move (U n) r =
+    let p = head r
+        (hx, hy) = p
+        r' = moveRope ((hx + 1, hy) : tail r)
+     in r' : move (U (n - 1)) r'
 move (L 0) r = [r]
-move (L n) r = let p = head r
-                   (hx, hy) = p
-                   r' = moveRope ( (hx, hy-1): tail r) in r' : move (L (n - 1)) r'
-
+move (L n) r =
+    let p = head r
+        (hx, hy) = p
+        r' = moveRope ((hx, hy - 1) : tail r)
+     in r' : move (L (n - 1)) r'
 move (D 0) r = [r]
-move (D n) r = let p = head r
-                   (hx, hy) = p
-                   r' = moveRope ( (hx -1, hy): tail r) in r' : move (D (n - 1)) r'
+move (D n) r =
+    let p = head r
+        (hx, hy) = p
+        r' = moveRope ((hx - 1, hy) : tail r)
+     in r' : move (D (n - 1)) r'
 empty :: Rope
 empty = [(0, 0), (0, 0)]
 
 empty' :: Rope
-empty' = [(0, 0), (0, 0), (0, 0), (0, 0),(0, 0), (0, 0),(0, 0), (0, 0),(0, 0), (0, 0)]
+empty' = [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
 
 visited :: Rope -> [Movement] -> (Rope, [Point])
 visited r =
     foldl
         ( \(s, points) m ->
             let ns = move m s
-                points' = map last ns in (last ns, points ++ points')
+                points' = map last ns
+             in (last ns, points ++ points')
         )
-        (r, [(0,0)])
+        (r, [(0, 0)])
 
 -- ..##..
 -- ...##.
@@ -94,14 +102,24 @@ test :: IO ()
 test = do
     input <- readFile "data/2022/day9-test.txt"
     let movements = fromRight [] $ parseOnly movementParser $ T.pack input
-        (r, points) = visited empty' [R 5 , U 8, L 8, D 3, R 17
-                                     ,D 10, L 25,U 20]
-        -- r = moveRope ((0,1): (tail empty'))
+        (r, points) =
+            visited
+                empty'
+                [ R 5
+                , U 8
+                , L 8
+                , D 3
+                , R 17
+                , D 10
+                , L 25
+                , U 20
+                ]
+    -- r = moveRope ((0,1): (tail empty'))
     -- print movements
     print r
-    print (length  r)
+    print (length r)
     print points
-    print . Set.size . Set.fromList  $ points
+    print . Set.size . Set.fromList $ points
 
 partI :: IO Int
 partI = do
