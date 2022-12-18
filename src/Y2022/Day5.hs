@@ -13,7 +13,7 @@ import Data.Text qualified as T
 type Crate = Char
 type Stack = [Crate]
 type Stacks = [Stack]
-data Procedure = Procedure Int Int Int deriving (Show)
+data Procedure = Procedure Int Int Int deriving stock Show
 
 splitStack :: String -> String
 splitStack = head . splitOn "\n\n"
@@ -42,16 +42,16 @@ parseStack = snd . foldr parse' ([], []) . lines
 
 procedureParse :: Parser Procedure
 procedureParse = do
-    string "move"
-    space
+    _ <- string "move"
+    _ <- space
     count' <- count 2 digit <|> count 1 digit
-    space
-    string "from"
-    space
+    _ <- space
+    _ <- string "from"
+    _ <- space
     from <- count 1 digit
-    space
-    string "to"
-    space
+    _ <- space
+    _ <- string "to"
+    _ <- space
     to <- count 1 digit
     return $ Procedure (read count') (read from) (read to)
 
