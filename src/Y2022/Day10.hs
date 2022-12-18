@@ -1,16 +1,12 @@
 module Y2022.Day10 where
 
 import Control.Applicative (many, (<|>))
-import Control.Monad (forM, join)
 import Data.Attoparsec.Text (
     Parser,
-    char,
     digit,
     endOfLine,
-    letter,
     many1,
     parseOnly,
-    space,
     string,
  )
 import Data.Either (fromRight)
