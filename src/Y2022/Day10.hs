@@ -26,20 +26,20 @@ parseInstructions = many ( instructionParser <* endOfLine)
 
 
 nthCycle :: Int -> [Instruction] -> Int
-nthCycle n instructions = let r = if n >= length results then results else take n results in n * (last r)
+nthCycle n instructions = let r = if n >= length results then results else take n results in n * last r
   where results =  eva instructions
 
 
 
 eva :: [Instruction] -> [Int]
-eva = tail . foldl (\ results instruction -> let result = last results in case instruction of
+eva =  foldl (\ results instruction -> let result = last results in case instruction of
                                         Noop -> results ++ [result]
                                         AddX n -> results ++ [result, result + n] )
       [1]
 
 test :: IO ()
 test = do
-    input <- readFile "data/2022/day10-test.txt"
+    input <- readFile "data/2022/day10.txt"
     let instructions = fromRight [] $ parseOnly parseInstructions $ T.pack input
         -- r = nthCycle 5 [Noop, AddX 3, AddX (-5)]
     print instructions
@@ -49,6 +49,6 @@ test = do
     print $ nthCycle 140 instructions
     print $ nthCycle 180 instructions
     print $ nthCycle 220 instructions
-    print . length $ eva instructions
+    print $ nthCycle 20 instructions + nthCycle 60 instructions + nthCycle 100 instructions + nthCycle 140 instructions + nthCycle 180 instructions + nthCycle 220 instructions
         -- r = moveRope ((0,1): (tail empty'))
     -- print movements
