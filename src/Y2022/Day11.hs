@@ -1,8 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Y2022.Day11 where
-import Debug.Trace (trace)
-import Data.List.Split (splitOn)
+
 import Control.Applicative (many, (<|>))
 import Control.Lens hiding (index, op)
 import Control.Lens.TH
@@ -19,9 +18,13 @@ import Data.Attoparsec.Text (
     signed,
     string,
  )
+import Data.List (sortOn)
+import Data.List.Split (splitOn)
 
 import Data.Either (rights)
+import Data.Ord (Down (Down))
 import Data.Text qualified as T
+
 type Idx = Int
 type Val = Int
 data Monkey = Monkey
@@ -35,7 +38,7 @@ data Monkey = Monkey
     }
 $(makeLenses ''Monkey)
 instance Show Monkey where
-    show m = "Monkey " ++ show (_index m) ++ " inspected items " ++ show (_count m) ++ " times. :" ++ show (_items m)
+    show m = "Monkey " ++ show (_index m) ++ " inspected items " ++ show (_count m) ++ " times. :" ++ show (_items m) ++ "divibile: " ++ show (_divisible m)
 eval :: Int -> [Monkey] -> [Monkey]
 eval i monkeys =
     let monkey = monkeys !! i
@@ -50,16 +53,24 @@ replicateList :: Int -> [a] -> [a]
 replicateList 0 _ = []
 replicateList n list = list ++ replicateList (n - 1) list
 
+operationParser :: Parser (Val -> Val)
+operationParser =
+    (string "  Operation: new = old * old" >> return (\x -> x * x))
+        <|> (string "  Operation: new = old + old" >> return (\x -> x + x))
+        <|> do
+            op' <- string "  Operation: new = old " >> (string "* " >> return (*)) <|> (string "+ " >> return (+))
+            opVal <- decimal
+            return (op' opVal)
+
 monkeyParser :: Parser Monkey
 monkeyParser = do
     ind <- string "Monkey " >> decimal <* string ":" <* endOfLine
     start <- string "  Starting items: " >> (decimal `sepBy` string ", ") <* endOfLine
-    -- op' <- string "  Operation: new = old " >> (string "* " >> return (*)) <|> (string "+ " >> return (+))
-    -- opVal <- decimal <* endOfLine
-    -- d <- string "  Test: divisible by " >> decimal <* endOfLine
-    -- tt <- string "    If true: throw to monkey " >> decimal <* endOfLine
-    -- ft <- string "    If false: throw to monkey " >> decimal <* endOfLine
-    return (Monkey ind start (* 19) 1 1 1 0)
+    op' <- operationParser <* endOfLine
+    d <- string "  Test: divisible by " >> decimal <* endOfLine
+    tt <- string "    If true: throw to monkey " >> decimal <* endOfLine
+    ft <- string "    If false: throw to monkey " >> decimal
+    return (Monkey ind start op' d tt ft 0)
 
 throwItem :: Val -> Monkey -> Monkey
 throwItem v = over items (++ [v])
@@ -74,8 +85,10 @@ testMonkeys =
 
 test :: IO ()
 test = do
-    input <-  splitOn "\n\n" <$>  readFile "data/2022/day11-test.txt"
-    mapM_ print input
-    let monkeys =  map  (  parseOnly monkeyParser  . T.pack  )  $ input
-    print monkeys
-    -- mapM_ print $ foldl (flip eval) testMonkeys (replicateList 20 [0, 1, 2, 3])
+    input <- splitOn "\n\n" <$> readFile "data/2022/day11.txt"
+    let monkeys = rights . map (parseOnly monkeyParser . T.pack) $ input
+        newMonkeys = foldl (flip eval) monkeys (replicateList 20 (map _index monkeys))
+        maxPair = take 2 . sortOn Down . map (_count) $ newMonkeys
+    print (head maxPair * last maxPair)
+
+-- mapM_ print newMonkeys
