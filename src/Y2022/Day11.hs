@@ -2,6 +2,7 @@
 
 module Y2022.Day11 where
 
+import Data.List.Split (splitOn)
 import Control.Applicative (many, (<|>))
 import Control.Lens hiding (index, op)
 import Control.Lens.TH
@@ -19,6 +20,8 @@ import Data.Attoparsec.Text (
     string,
  )
 
+import Data.Either (rights)
+import Data.Text qualified as T
 type Idx = Int
 type Val = Int
 data Monkey = Monkey
@@ -71,4 +74,7 @@ testMonkeys =
 
 test :: IO ()
 test = do
+    input <- readFile "data/2022/day11-test.txt"
+    let monkeys = rights. map  (  parseOnly monkeyParser  . T.pack  )  .  splitOn "\n\n" $ input
+    print monkeys
     mapM_ print $ foldl (flip eval) testMonkeys (replicateList 20 [0, 1, 2, 3])
