@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Y2022.Day11 where
-
+import Debug.Trace (trace)
 import Data.List.Split (splitOn)
 import Control.Applicative (many, (<|>))
 import Control.Lens hiding (index, op)
@@ -52,14 +52,14 @@ replicateList n list = list ++ replicateList (n - 1) list
 
 monkeyParser :: Parser Monkey
 monkeyParser = do
-    ind <- string "Monkey " >> decimal <* endOfLine
-    start <- string "  Starting items:" >> decimal `sepBy` char ',' <* endOfLine
+    ind <- string "Monkey " >> decimal <* string ":" <* endOfLine
+    start <- string "  Starting items: " >> decimal `sepBy` char ',' <* endOfLine
     op' <- string "  Operation: new = old " >> (string "* " >> return (*)) <|> (string "+ " >> return (+))
     opVal <- decimal <* endOfLine
     d <- string "  Test: divisible by " >> decimal <* endOfLine
     tt <- string "    If true: throw to monkey " >> decimal <* endOfLine
     ft <- string "    If false: throw to monkey " >> decimal <* endOfLine
-    return (Monkey ind start (op' opVal) d tt ft 0)
+    return $ (Monkey ind start (* 19) d tt ft 0)
 
 throwItem :: Val -> Monkey -> Monkey
 throwItem v = over items (++ [v])
@@ -74,7 +74,8 @@ testMonkeys =
 
 test :: IO ()
 test = do
-    input <- readFile "data/2022/day11-test.txt"
-    let monkeys = rights. map  (  parseOnly monkeyParser  . T.pack  )  .  splitOn "\n\n" $ input
+    input <-  splitOn "\n\n" <$>  readFile "data/2022/day11-test.txt"
+    mapM_ print input
+    let monkeys = rights . map  (  parseOnly monkeyParser  . T.pack  )  $ input
     print monkeys
-    mapM_ print $ foldl (flip eval) testMonkeys (replicateList 20 [0, 1, 2, 3])
+    -- mapM_ print $ foldl (flip eval) testMonkeys (replicateList 20 [0, 1, 2, 3])
