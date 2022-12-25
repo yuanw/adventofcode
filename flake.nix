@@ -83,7 +83,7 @@
         devShells.default =
           config.mission-control.installToDevShell self'.devShells.main;
 
-        packages.default = self'.packages.aoc;
+        packages.default = self'.packages.main-aoc;
       };
     };
 }
