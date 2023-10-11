@@ -16,7 +16,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = inputs@{ self, system, nixpkgs, flake-parts, ... }:
+  outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = nixpkgs.lib.systems.flakeExposed;
       imports = [
@@ -25,13 +25,13 @@
         inputs.treefmt-nix.flakeModule
         inputs.flake-root.flakeModule
       ];
-      perSystem = { self', lib, config, pkgs, ... }: {
-         _module.args.pkgs = import inputs.nixpkgs {
+      perSystem = { self', system, lib, config, pkgs, ... }: {
+        _module.args.pkgs = import inputs.nixpkgs {
           inherit system;
           overlays = [
             inputs.rust-overlay.overlays.default
-                     ];
-                };
+          ];
+        };
         haskellProjects.default = {
           settings = { };
           # overrides = self: super: { };
@@ -97,7 +97,7 @@
             config.treefmt.build.devShell
             config.haskellProjects.default.outputs.devShell
           ];
- buildInputs = [
+          buildInputs = [
             pkgs.rust-bin.beta.latest.default
           ];
         };
