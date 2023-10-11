@@ -26,6 +26,12 @@
         inputs.flake-root.flakeModule
       ];
       perSystem = { self', lib, config, pkgs, ... }: {
+         _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [
+            inputs.rust-overlay.overlays.default
+                     ];
+                };
         haskellProjects.default = {
           settings = { };
           # overrides = self: super: { };
@@ -34,20 +40,6 @@
             hlsCheck.enable = false;
           };
         };
-        # haskellProjects.main = {
-        #   packages = {
-        #     # You can add more than one local package here.
-        #     aoc.root = ./.; # Assumes ./my-package.cabal
-        #   };
-
-        #   buildTools = hp: {
-        #     treefmt = config.treefmt.build.wrapper;
-        #   } // config.treefmt.build.programs;
-        #   # overrides = self: super: {}
-        #   hlintCheck.enable = true;
-        #   hlsCheck.enable = true;
-        # };
-        # source tree was auto formatted.
         treefmt.config = {
           inherit (config.flake-root) projectRootFile;
           package = pkgs.treefmt;
@@ -65,7 +57,7 @@
             ];
           };
         };
-               pre-commit.settings.hooks.treefmt.enable = true;
+        pre-commit.settings.hooks.treefmt.enable = true;
         # # Dev shell scripts.
         # mission-control.scripts = {
         #   docs = {
@@ -101,11 +93,13 @@
         devShells.default = pkgs.mkShell {
           inputsFrom = [
 
-        config.pre-commit.devShell
+            config.pre-commit.devShell
             config.treefmt.build.devShell
             config.haskellProjects.default.outputs.devShell
           ];
-
+ buildInputs = [
+            pkgs.rust-bin.beta.latest.default
+          ];
         };
         packages.default = config.packages.aoc;
       };
