@@ -94,12 +94,12 @@
         devShells.default = pkgs.mkShell {
  inputsFrom = [
         config.treefmt.build.devShell
-        config.pre-commit.devShell
+        # config.pre-commit.devShell
         config.haskellProjects.default.outputs.devShell
       ];
 
       };
-        packages.default = self'.packages.main-aoc;
+        packages.default = config.packages.aoc;
       };
     };
 }
