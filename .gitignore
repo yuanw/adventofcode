@@ -2,7 +2,7 @@
 .idea
 *.log
 tmp/
-
+.pre-commit-config.yaml
 dist
 dist-*
 cabal-dev
