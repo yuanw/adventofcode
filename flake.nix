@@ -20,7 +20,7 @@
         inputs.flake-root.flakeModule
       ];
       perSystem = { self', lib, config, pkgs, ... }: {
-         haskellProjects.default = {
+        haskellProjects.default = {
           settings = { };
           # overrides = self: super: { };
           autoWire = [ "packages" "apps" "checks" ]; # Wire all but the devShell
@@ -92,13 +92,13 @@
 
         # Default shell.
         devShells.default = pkgs.mkShell {
- inputsFrom = [
-        config.treefmt.build.devShell
-        # config.pre-commit.devShell
-        config.haskellProjects.default.outputs.devShell
-      ];
+          inputsFrom = [
+            config.treefmt.build.devShell
+            # config.pre-commit.devShell
+            config.haskellProjects.default.outputs.devShell
+          ];
 
-      };
+        };
         packages.default = config.packages.aoc;
       };
     };
