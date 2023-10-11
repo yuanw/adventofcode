@@ -10,12 +10,18 @@
     crane.url = "github:ipetkov/crane";
     crane.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    pre-commit = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = nixpkgs.lib.systems.flakeExposed;
       imports = [
         inputs.haskell-flake.flakeModule
+        inputs.pre-commit.flakeModule
         inputs.treefmt-nix.flakeModule
         inputs.flake-root.flakeModule
       ];
@@ -59,6 +65,7 @@
             ];
           };
         };
+               pre-commit.settings.hooks.treefmt.enable = true;
         # # Dev shell scripts.
         # mission-control.scripts = {
         #   docs = {
@@ -93,6 +100,8 @@
         # Default shell.
         devShells.default = pkgs.mkShell {
           inputsFrom = [
+
+        config.pre-commit.devShell
             config.treefmt.build.devShell
             config.haskellProjects.default.outputs.devShell
           ];
