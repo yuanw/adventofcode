@@ -9,6 +9,7 @@ build-type:    Simple
 data-files:
   data/2021/*.txt
   data/2022/*.txt
+  data/2023/*.txt
 
 -- extra-source-files:
 --   LICENSE
@@ -95,6 +96,7 @@ common shared
     Y2022.Day7
     Y2022.Day8
     Y2022.Day9
+    Y2023.Day1
 
 -- Y2021.Day10
 -- Y2021.Day11
