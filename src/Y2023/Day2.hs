@@ -33,7 +33,7 @@ gameParser = do
     string "Game "
     i <- decimal
     char ':'
-    cubes <- cubeParser `sepBy` char ';'
+    cubes <- cubeParser `sepBy` (char ';' <|> char ',')
     return $ Game i (foldCube cubes)
 
 gamesParser :: Parser [Game]
