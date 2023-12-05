@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Y2023.Day2 where
+module Y2023.Day2 (partI, partII) where
 
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
@@ -22,12 +22,6 @@ possible c (Game _ ba) = foldr (\a b -> b && help c a) True ba
   where
     help (Config lb lr lg) (Config rb rr rg) = lb >= rb && lr >= rr && lg >= rg
 
-foldCube :: [Cube] -> Map.Map Color Int
-foldCube = foldr (\(Cube i c) m -> Map.insertWith (+) c i m) Map.empty
-
-toConfig :: Map.Map Color Int -> Config
-toConfig m = Config (fromMaybe 0 $ Map.lookup Blue m) (fromMaybe 0 $ Map.lookup Red m) (fromMaybe 0 $ Map.lookup Green m)
-
 cubeParser :: Parser Cube
 cubeParser = do
     char ' '
@@ -40,6 +34,12 @@ bagsParser :: Parser Config
 bagsParser = do
     bags <- cubeParser `sepBy` char ','
     return $ toConfig (foldCube bags)
+  where
+    foldCube :: [Cube] -> Map.Map Color Int
+    foldCube = foldr (\(Cube i c) m -> Map.insertWith (+) c i m) Map.empty
+
+    toConfig :: Map.Map Color Int -> Config
+    toConfig m = Config (fromMaybe 0 $ Map.lookup Blue m) (fromMaybe 0 $ Map.lookup Red m) (fromMaybe 0 $ Map.lookup Green m)
 
 gameParser :: Parser Game
 gameParser = do
