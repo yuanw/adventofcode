@@ -18,7 +18,7 @@ data Config = Config {totalBlueCount :: Int, totalRedCount :: Int, totalGreenCou
 data Cube = Cube Int Color deriving (Show)
 
 foldCube :: [Cube] -> Map.Map Color Int
-foldCube = foldr (\(Cube i c) m -> Map.insertWith (+) c i m) Map.empty
+foldCube = foldr (\(Cube i c) m -> Map.insertWith (+) c i m) $ Map.fromList [(Red, 0), (Blue, 0), (Green, 0)]
 
 cubeParser :: Parser Cube
 cubeParser = do
