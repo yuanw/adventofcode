@@ -1,6 +1,6 @@
 module Y2023.Day3 where
 
-import Control.Monad (forM_, join)
+import Control.Monad (join)
 import Data.Char (isDigit)
 
 type Grid = [[Char]]
@@ -56,7 +56,7 @@ adjacentToSymbol :: Int -> Int -> Grid -> [Point] -> Bool
 adjacentToSymbol heigh width grid points = any ((\c -> not (isDigit c || c == '.')) . flip lookUp grid) $ join (map (getNeighour heigh width) points)
 
 adjacentToNumbers :: Point -> Int -> Int -> [[Point]] -> [[Point]]
-adjacentToNumbers p h w = filter (\ps -> any (`elem` ps) ns)
+adjacentToNumbers p h w = filter (any (`elem` ns))
   where
     ns = getNeighour h w p
 
@@ -89,6 +89,6 @@ partII = do
         stars = findStarPoint grid y x
         -- gears =  map (\p -> adjacentToNumbers p y x grid pointOfNum ) stars
         gears = filter (\l -> length l == 2) $ map (\p -> adjacentToNumbers p y x pointOfNum) stars
-        partNumbers = sum $ map (foldr (*) 1 . (`getNumbers` grid)) gears
+        partNumbers = sum $ map (product . (`getNumbers` grid)) gears
 
     print partNumbers
