@@ -1,6 +1,6 @@
 module Y2023.Day3 where
 
-import Control.Monad (join)
+import Control.Monad (forM_, join)
 import Data.Char (isDigit)
 
 type Grid = [[Char]]
@@ -39,7 +39,7 @@ getNumbers ps grid = map helper ps
 
 getNeighour :: Int -> Int -> Point -> [Point]
 getNeighour heigh width (x, y) =
-    filter (\(a, b) -> a > 0 && a < width - 1 && b > 0 && b < heigh - 1) $
+    filter (\(a, b) -> a >= 0 && a < width && b >= 0 && b < heigh) $
         map
             (\(a, b) -> (a + x, b + y))
             [ (-1, -1)
@@ -56,7 +56,7 @@ adjacentToSymbol :: Int -> Int -> Grid -> [Point] -> Bool
 adjacentToSymbol heigh width grid points = any ((\c -> not (isDigit c || c == '.')) . flip lookUp grid) $ join (map (getNeighour heigh width) points)
 
 adjacentToNumbers :: Point -> Int -> Int -> Grid -> [[Point]] -> [[Point]]
-adjacentToNumbers p h w grid pointOfNum = undefined
+adjacentToNumbers p h w grid pointOfNum = filter (\ps -> any (\p -> p `elem` ps) ns) pointOfNum
   where
     ns = getNeighour h w p
 
@@ -75,6 +75,20 @@ partI = do
     -- print pointOfNum
     -- print (test y x grid [(2,0),(1,0),(0,0)])
     -- print (adjacentToSymbol   y x grid [(2,0),(1,0),(0,0)])
-    print (findStarPoint grid y x)
+    -- print (findStarPoint grid y x)
+    print (sum $ getNumbers wantedPointOfNum grid)
 
--- print (sum $ getNumbers wantedPointOfNum grid)
+partII :: IO ()
+partII = do
+    grid <- lines <$> readFile "data/2023/day3.txt"
+    let y = length grid
+        x = length (head grid)
+
+        state = gridFold zero grid y x
+        pointOfNum = allNum state
+        stars = findStarPoint grid y x
+        -- gears =  map (\p -> adjacentToNumbers p y x grid pointOfNum ) stars
+        gears = filter (\l -> length l == 2) $ map (\p -> adjacentToNumbers p y x grid pointOfNum) stars
+        partNumbers = sum $ map (foldr (*) 1 . (`getNumbers` grid)) gears
+
+    print partNumbers
