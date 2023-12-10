@@ -1,8 +1,7 @@
 module Y2023.Day3 where
 
 import Control.Monad (join)
-import Data.Char (isDigit, isSymbol)
-import Data.List (any, or, sortBy)
+import Data.Char (isDigit)
 
 type Grid = [[Char]]
 type Point = (Int, Int)
@@ -54,14 +53,19 @@ getNeighour heigh width (x, y) =
             ]
 
 adjacentToSymbol :: Int -> Int -> Grid -> [Point] -> Bool
-adjacentToSymbol heigh width grid points = or $ map ((\c -> not (isDigit c || c == '.')) . (flip lookUp) grid) $ join (map (\p -> getNeighour heigh width p) points)
+adjacentToSymbol heigh width grid points = any ((\c -> not (isDigit c || c == '.')) . flip lookUp grid) $ join (map (getNeighour heigh width) points)
 
-test :: Int -> Int -> Grid -> [Point] -> String
-test heigh width grid points = map (`lookUp` grid) $ join (map (getNeighour heigh width) points)
+adjacentToNumbers :: Point -> Int -> Int -> Grid -> [[Point]] -> [[Point]]
+adjacentToNumbers p h w grid pointOfNum = undefined
+  where
+    ns = getNeighour h w p
+
+findStarPoint :: Grid -> Int -> Int -> [Point]
+findStarPoint grid height width = [(i, j) | i <- [0 .. width - 1], j <- [0 .. height - 1], lookUp (i, j) grid == '*']
 
 partI :: IO ()
 partI = do
-    grid <- lines <$> readFile "data/2023/day3.txt"
+    grid <- lines <$> readFile "data/2023/day3-test.txt"
     let y = length grid
         x = length (head grid)
 
@@ -71,4 +75,6 @@ partI = do
     -- print pointOfNum
     -- print (test y x grid [(2,0),(1,0),(0,0)])
     -- print (adjacentToSymbol   y x grid [(2,0),(1,0),(0,0)])
-    print (sum $ getNumbers wantedPointOfNum grid)
+    print (findStarPoint grid y x)
+
+-- print (sum $ getNumbers wantedPointOfNum grid)
