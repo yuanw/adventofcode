@@ -55,7 +55,7 @@ partI = do
 
 partII :: IO ()
 partII = do
-    input <- TIO.readFile "data/2023/day4-2-test.txt"
+    input <- TIO.readFile "data/2023/day4.txt"
     -- TIO.putStrLn input
     let cards = fromRight [] (parseOnly cardsParser input)
         scores = scoreII cards
