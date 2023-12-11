@@ -1,4 +1,4 @@
-module Y2023.Day3 where
+module Y2023.Day3 (partI, partII) where
 
 import Control.Monad (join)
 import Data.Char (isDigit)
@@ -9,10 +9,6 @@ type Point = (Int, Int)
 data State = State {currentNum :: [Point], allNum :: [[Point]]} deriving (Show)
 zero :: State
 zero = State [] []
-mySort :: Point -> Point -> Ordering
-mySort (x1, y1) (x2, y2) = case y1 `compare` y2 of
-    EQ -> x1 `compare` x2
-    other -> other
 
 lookUp :: Point -> Grid -> Char
 lookUp (x, y) g = (g !! y) !! x
