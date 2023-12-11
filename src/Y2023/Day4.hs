@@ -28,10 +28,17 @@ cardParser = do
 cardsParser :: Parser [Card]
 cardsParser = many cardParser
 
+point :: Card -> Int
+point (Card _ wN mN) = foldr (\n s -> if n `elem` wN then incr s else s) 0 mN
+  where
+    incr :: Int -> Int
+    incr 0 = 1
+    incr a = a * 2
+
 partI :: IO ()
 partI = do
     input <- TIO.readFile "data/2023/day4.txt"
     -- TIO.putStrLn input
-    case (parseOnly cardsParser input) of
-        Left err -> putStrLn $ "Error while parsing: " ++ err
-        Right card -> print card
+    let cards = fromRight [] (parseOnly cardsParser input)
+        scores = sum $ map point cards
+    print scores
