@@ -6,7 +6,7 @@ import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
 import Data.Either (fromRight)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text.IO qualified as TIO
 
 type Seed = Int
@@ -14,7 +14,7 @@ type Seeds = [Seed]
 
 data MapEntry = MapEntry Int Int Int deriving (Show)
 
-data Input = Input Seeds [MapEntry] [MapEntry] [MapEntry] [MapEntry] [MapEntry] [MapEntry] [MapEntry] deriving (Show)
+data Input = Input Seeds [[MapEntry]] deriving (Show)
 
 skipRestOfLine :: Parser ()
 skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
@@ -33,6 +33,18 @@ mapEntryParser = do
 
 mapEntriesParser :: Parser [MapEntry]
 mapEntriesParser = many $ mapEntryParser <* endOfLine
+
+mapping :: Int -> MapEntry -> Maybe Int
+mapping v (MapEntry dest source range) = if v >= source && v <= (source + range) then Just (v - source + dest) else Nothing
+
+mappingCategory :: Int -> [MapEntry] -> Int
+mappingCategory v entries = fromMaybe v $ foldl (\accum entry -> if isJust accum then accum else mapping v entry) Nothing entries
+
+mappingCategories :: Int -> [[MapEntry]] -> Int
+mappingCategories = foldl mappingCategory
+
+solve :: Input -> [Int]
+solve (Input seeds entries) = map (\s -> mappingCategories s entries) seeds
 
 inputParser :: Parser Input
 inputParser = do
@@ -66,11 +78,14 @@ inputParser = do
     string "humidity-to-location map:"
     skipRestOfLine
     h2l <- mapEntriesParser
-    return $ Input seeds entries s2f f2w w2l l2t t2h h2l
+    return $ Input seeds [entries, s2f, f2w, w2l, l2t, t2h, h2l]
 
 partI :: IO ()
 partI = do
-    input <- TIO.readFile "data/2023/day5-test.txt"
+    rawInput <- TIO.readFile "data/2023/day5.txt"
     -- TIO.putStrLn input
-    let seeds = (parseOnly inputParser input)
-    print seeds
+    let e = (parseOnly inputParser rawInput)
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        -- Right logs ->  printDetails logs
+        Right input@(Input _ entries) -> print (solve input)
