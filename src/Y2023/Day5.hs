@@ -5,10 +5,15 @@ module Y2023.Day5 where
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
 import Data.Either (fromRight)
+import Data.Interval (Interval)
+import Data.Interval qualified as IV
 import Data.List (nub)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text.IO qualified as TIO
+
+fromRange :: Int -> Int -> Interval Int
+fromRange x len = IV.Finite x IV.<=..< IV.Finite (x + len)
 
 type Seed = Int
 type Seeds = [Seed]
