@@ -5,6 +5,7 @@ module Y2023.Day5 where
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
 import Data.Either (fromRight)
+import Data.List (nub)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text.IO qualified as TIO
@@ -43,9 +44,15 @@ mappingCategory v entries = fromMaybe v $ foldl (\accum entry -> if isJust accum
 mappingCategories :: Int -> [[MapEntry]] -> Int
 mappingCategories = foldl mappingCategory
 
+range :: [Seed] -> [Int]
+range [] = []
+range (x : y : xs) = [x + i | i <- [0 .. y]] ++ range xs
+
 solve :: Input -> [Int]
 solve (Input seeds entries) = map (\s -> mappingCategories s entries) seeds
 
+solve' :: Input -> [Int]
+solve' (Input seeds entries) = map (\s -> mappingCategories s entries) (nub $ range seeds)
 inputParser :: Parser Input
 inputParser = do
     seeds <- seedsParser
@@ -89,3 +96,13 @@ partI = do
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
         Right input@(Input _ entries) -> print (minimum $ solve input)
+
+partII :: IO ()
+partII = do
+    rawInput <- TIO.readFile "data/2023/day5.txt"
+    -- TIO.putStrLn input
+    let e = (parseOnly inputParser rawInput)
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        -- Right logs ->  printDetails logs
+        Right input@(Input _ entries) -> print (minimum $ solve' input)
