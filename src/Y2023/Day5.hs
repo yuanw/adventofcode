@@ -88,4 +88,4 @@ partI = do
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
-        Right input@(Input _ entries) -> print (solve input)
+        Right input@(Input _ entries) -> print (minimum $ solve input)
