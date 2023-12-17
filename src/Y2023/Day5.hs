@@ -12,8 +12,9 @@ import Data.IntervalMap.Strict qualified as IVM
 import Data.IntervalSet (IntervalSet)
 import Data.IntervalSet qualified as IVS
 import Data.List (foldl', nub)
+import Data.List.Split (chunksOf)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (fromJust, fromMaybe, isJust)
+import Data.Maybe (catMaybes, fromJust, fromMaybe, isJust)
 import Data.Text.IO qualified as TIO
 
 type Seed = Int
@@ -35,8 +36,8 @@ convertSingle x mp = case IVM.lookup x mp of
     Nothing -> x -- the value is not in any known interval
     Just delta -> x + delta -- that interval has the given delta
 
-convertMany :: IntervalMap Int Int -> IntervalSet Int -> IntervalSet Int
-convertMany mp xs = misses <> hits
+convertMany :: IntervalSet Int -> IntervalMap Int Int -> IntervalSet Int
+convertMany xs mp = misses <> hits
   where
     -- dummy map corresponding to putting `()` at every interval in our
     -- `IntervalSet`, needed because interval map functions require maps
@@ -130,6 +131,15 @@ partI = do
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
         Right input@(Input _ entries) -> print (minimum $ solve input)
+partII :: IO ()
+partII = do
+    rawInput <- TIO.readFile "data/2023/day5.txt"
+    -- TIO.putStrLn input
+    let e = (parseOnly inputParser rawInput)
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        -- Right logs ->  printDetails logs
+        Right input@(Input seeds entries) -> print (minimum $ solve' input)
 
 partI' :: IO ()
 partI' = do
@@ -141,12 +151,23 @@ partI' = do
         -- Right logs ->  printDetails logs
         Right input@(Input seeds entries) -> print (minimum $ map (\s0 -> foldl' convertSingle s0 (map buildMap entries)) seeds)
 
-partII :: IO ()
-partII = do
+prepare :: [Seed] -> [Interval Int]
+prepare = fmap (uncurry fromRange) . catMaybes . fmap listTup . chunksOf 2
+
+listTup :: [a] -> Maybe (a, a)
+listTup (x : y : _) = Just (x, y)
+listTup _ = Nothing
+
+partII' :: IO ()
+partII' = do
     rawInput <- TIO.readFile "data/2023/day5.txt"
     -- TIO.putStrLn input
     let e = (parseOnly inputParser rawInput)
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
-        Right input@(Input seeds entries) -> print (minimum $ solve' input)
+        Right input@(Input seeds entries) -> print (fromFinite . IV.lowerBound . IVS.span $ foldl' convertMany (IVS.fromList (prepare seeds)) (map buildMap entries))
+  where
+    fromFinite = \case
+        IV.Finite x -> Just x
+        _ -> Nothing
