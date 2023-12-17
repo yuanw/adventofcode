@@ -9,22 +9,10 @@ import Data.Interval (Interval)
 import Data.Interval qualified as IV
 import Data.IntervalMap.Strict (IntervalMap)
 import Data.IntervalMap.Strict qualified as IVM
-import Data.List (nub)
+import Data.List (foldl', nub)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text.IO qualified as TIO
-
-fromRange :: Int -> Int -> Interval Int
-fromRange x len = IV.Finite x IV.<=..< IV.Finite (x + len)
-
--- | Takes in the (a, b, c) triples that the problem gives map chunks
-buildMap :: [(Int, Int, Int)] -> IntervalMap Int Int
-buildMap = IVM.fromList . map (\(dest, src, len) -> (fromRange src len, dest - src))
-
-convertSingle :: Int -> IntervalMap Int Int -> Int
-convertSingle x mp = case IVM.lookup x mp of
-    Nothing -> x -- the value is not in any known interval
-    Just delta -> x + delta -- that interval has the given delta
 
 type Seed = Int
 type Seeds = [Seed]
@@ -32,6 +20,18 @@ type Seeds = [Seed]
 data MapEntry = MapEntry Int Int Int deriving (Show)
 
 data Input = Input Seeds [[MapEntry]] deriving (Show)
+
+fromRange :: Int -> Int -> Interval Int
+fromRange x len = IV.Finite x IV.<=..< IV.Finite (x + len)
+
+-- | Takes in the (a, b, c) triples that the problem gives map chunks
+buildMap :: [MapEntry] -> IntervalMap Int Int
+buildMap = IVM.fromList . map (\(MapEntry dest src len) -> (fromRange src len, dest - src))
+
+convertSingle :: Int -> IntervalMap Int Int -> Int
+convertSingle x mp = case IVM.lookup x mp of
+    Nothing -> x -- the value is not in any known interval
+    Just delta -> x + delta -- that interval has the given delta
 
 skipRestOfLine :: Parser ()
 skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
@@ -112,6 +112,16 @@ partI = do
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
         Right input@(Input _ entries) -> print (minimum $ solve input)
+
+partI' :: IO ()
+partI' = do
+    rawInput <- TIO.readFile "data/2023/day5.txt"
+    -- TIO.putStrLn input
+    let e = (parseOnly inputParser rawInput)
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        -- Right logs ->  printDetails logs
+        Right input@(Input seeds entries) -> print (minimum $ map (\s0 -> foldl' (convertSingle . buildMap) s0 entries) seeds)
 
 partII :: IO ()
 partII = do
