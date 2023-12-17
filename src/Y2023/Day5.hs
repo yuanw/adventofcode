@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Y2023.Day5 where
+module Y2023.Day5 (partI', partII') where
 
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
