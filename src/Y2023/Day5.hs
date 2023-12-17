@@ -9,6 +9,8 @@ import Data.Interval (Interval)
 import Data.Interval qualified as IV
 import Data.IntervalMap.Strict (IntervalMap)
 import Data.IntervalMap.Strict qualified as IVM
+import Data.IntervalSet (IntervalSet)
+import Data.IntervalSet qualified as IVS
 import Data.List (foldl', nub)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust, fromMaybe, isJust)
@@ -32,6 +34,21 @@ convertSingle :: Int -> IntervalMap Int Int -> Int
 convertSingle x mp = case IVM.lookup x mp of
     Nothing -> x -- the value is not in any known interval
     Just delta -> x + delta -- that interval has the given delta
+
+convertMany :: IntervalMap Int Int -> IntervalSet Int -> IntervalSet Int
+convertMany mp xs = misses <> hits
+  where
+    -- dummy map corresponding to putting `()` at every interval in our
+    -- `IntervalSet`, needed because interval map functions require maps
+    tempMap :: IntervalMap Int ()
+    tempMap = IVM.fromList . map (,()) . IVS.toList $ xs
+
+    misses = IVM.keysSet $ tempMap `IVM.difference` mp
+    hits =
+        IVS.fromList
+            . map (\(iv, delta) -> IV.mapMonotonic (+ delta) iv)
+            . IVM.toList
+            $ IVM.intersectionWith const mp tempMap
 
 skipRestOfLine :: Parser ()
 skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
@@ -69,6 +86,7 @@ solve (Input seeds entries) = map (\s -> mappingCategories s entries) seeds
 
 solve' :: Input -> [Int]
 solve' (Input seeds entries) = map (\s -> mappingCategories s entries) (nub $ range seeds)
+
 inputParser :: Parser Input
 inputParser = do
     seeds <- seedsParser
@@ -121,7 +139,7 @@ partI' = do
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
-        Right input@(Input seeds entries) -> print (minimum $ map (\s0 -> foldl' (convertSingle . buildMap) s0 entries) seeds)
+        Right input@(Input seeds entries) -> print (minimum $ map (\s0 -> foldl' convertSingle s0 (map buildMap entries)) seeds)
 
 partII :: IO ()
 partII = do
@@ -131,4 +149,4 @@ partII = do
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
         -- Right logs ->  printDetails logs
-        Right input@(Input _ entries) -> print (minimum $ solve' input)
+        Right input@(Input seeds entries) -> print (minimum $ solve' input)
