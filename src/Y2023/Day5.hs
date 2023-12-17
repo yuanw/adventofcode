@@ -7,6 +7,8 @@ import Data.Attoparsec.Text
 import Data.Either (fromRight)
 import Data.Interval (Interval)
 import Data.Interval qualified as IV
+import Data.IntervalMap.Strict (IntervalMap)
+import Data.IntervalMap.Strict qualified as IVM
 import Data.List (nub)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust, fromMaybe, isJust)
@@ -14,6 +16,15 @@ import Data.Text.IO qualified as TIO
 
 fromRange :: Int -> Int -> Interval Int
 fromRange x len = IV.Finite x IV.<=..< IV.Finite (x + len)
+
+-- | Takes in the (a, b, c) triples that the problem gives map chunks
+buildMap :: [(Int, Int, Int)] -> IntervalMap Int Int
+buildMap = IVM.fromList . map (\(dest, src, len) -> (fromRange src len, dest - src))
+
+convertSingle :: Int -> IntervalMap Int Int -> Int
+convertSingle x mp = case IVM.lookup x mp of
+    Nothing -> x -- the value is not in any known interval
+    Just delta -> x + delta -- that interval has the given delta
 
 type Seed = Int
 type Seeds = [Seed]
@@ -51,7 +62,7 @@ mappingCategories = foldl mappingCategory
 
 range :: [Seed] -> [Int]
 range [] = []
-range (x : y : xs) = [x + i | i <- [0 .. y]] ++ range xs
+range (x : y : xs) = [x + i | i <- [0 .. y - 1]] ++ range xs
 
 solve :: Input -> [Int]
 solve (Input seeds entries) = map (\s -> mappingCategories s entries) seeds
