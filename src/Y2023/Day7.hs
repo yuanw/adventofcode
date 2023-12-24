@@ -9,7 +9,7 @@ import Control.Lens.Each (each)
 import Control.Lens.Fold (toListOf)
 import Data.Attoparsec.Text
 import Data.Foldable (toList)
-import Data.List (sort, sortBy, sortOn, (\\))
+import Data.List (sort, sortBy, sortOn)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Ord (Down (..))
@@ -193,7 +193,7 @@ partII = do
         Left err -> putStrLn $ "Error while parsing: " ++ err
         Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn sortPartII input) [1 ..])
 
---        248750699
+-- 248750699
 -- it :: ()
 -- λ> Y2023.Day7.partII'
 -- 248696167
