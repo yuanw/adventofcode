@@ -59,16 +59,16 @@ compareHand a b = if typeA == typeB then compare (handToList a) (handToList b) e
     typeB = getType b
 
 compareHand' :: Hand' -> Hand' -> Ordering
-l `compareHand'` r = if tL == tR then compare (fmap (\card -> if card == J then Joker else card) . handToList $ hand'ToHand l) (fmap (\card -> if card == J then Joker else card) . handToList $ hand'ToHand r) else tL `compare` tR
+l `compareHand'` r = (tL, (map (\card -> if card == J then Joker else card) . handToList $ hand'ToHand l)) `compare` (tR, (map (\card -> if card == J then Joker else card) . handToList $ hand'ToHand r))
   where
     tL = getTypeWithJoker l
     tR = getTypeWithJoker r
 
     compareCard :: [Card] -> [Card] -> Ordering
     compareCard [] [] = EQ
-    compareCard (J : ls) (J : rs) = compareCard ls rs
-    compareCard (J : _) _ = LT
-    compareCard (a : ls) (b : rs) = if a == b then compareCard ls rs else compare a b
+    -- compareCard (J : ls) (J : rs) = compareCard ls rs
+    -- compareCard (J : _) (rs) = LT
+    compareCard (a : ls) (b : rs) = if a == b then compareCard ls rs else (if a == J then LT else compare a b)
     compareCard _ _ = error "cannot compare"
 
 instance Show Hand where
