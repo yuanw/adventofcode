@@ -7,7 +7,7 @@ import Control.Applicative (many, (<|>))
 import Control.Lens.Each (each)
 import Control.Lens.Fold (toListOf)
 import Data.Attoparsec.Text
-import Data.List (sort, sortBy)
+import Data.List (sort, sortBy, sortOn)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Text.IO qualified as TIO
@@ -39,9 +39,6 @@ newtype Hand' = Hand' {getCards' :: (Card, Card, Card, Card, Card)}
 
 data Row = Row Hand Int deriving (Eq, Show)
 data Row' = Row' Hand' Int deriving (Eq, Show)
-
-rowToRow' :: Row -> Row'
-rowToRow' (Row h b) = Row' (handToHand' h) b
 
 type Input = [Row]
 
@@ -79,9 +76,6 @@ instance Eq Hand where
 instance Ord Hand where
     a `compare` b = a `compareHand` b
 
-instance Ord Row where
-    (Row a _) `compare` (Row b _) = a `compare` b
-
 instance Show Hand' where
     show = show . hand'ToHand
 
@@ -90,9 +84,6 @@ instance Eq Hand' where
 
 instance Ord Hand' where
     a `compare` b = a `compareHand'` b
-
-instance Ord Row' where
-    (Row' a _) `compare` (Row' b _) = a `compare` b
 
 handToList :: Hand -> [Card]
 handToList = toListOf each . getCards
@@ -165,16 +156,16 @@ getTypeWithJoker = beforeType . addJoker . foldCard
 
 partI :: IO ()
 partI = do
-    rawInput <- TIO.readFile "data/2023/day7-test.txt"
-    let e = (parseOnly inputParser rawInput)
+    rawInput <- TIO.readFile "data/2023/day7.txt"
+    let e = parseOnly inputParser rawInput
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
-        Right input -> print (foldl (\accum (Row _ bid, rank) -> accum + bid * rank) 0 $ zip (sort input) [1 ..])
+        Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn (\(Row h _) -> h) input) [1 ..])
 
 partII :: IO ()
 partII = do
     rawInput <- TIO.readFile "data/2023/day7-test.txt"
-    let e = (parseOnly inputParser rawInput)
+    let e = parseOnly inputParser rawInput
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
-        Right input -> print (foldl (\accum (Row' _ bid, rank) -> accum + bid * rank) 0 $ zip (sort $ map rowToRow' input) [1 ..])
+        Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn (\(Row h _) -> handToHand' h) input) [1 ..])
