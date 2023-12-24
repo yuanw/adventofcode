@@ -9,7 +9,7 @@ import Control.Lens.Each (each)
 import Control.Lens.Fold (toListOf)
 import Data.Attoparsec.Text
 import Data.Foldable (toList)
-import Data.List (sort, sortBy, sortOn)
+import Data.List (sort, sortBy, sortOn, (\\))
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Ord (Down (..))
@@ -59,7 +59,7 @@ compareHand a b = if typeA == typeB then compare (handToList a) (handToList b) e
     typeB = getType b
 
 compareHand' :: Hand' -> Hand' -> Ordering
-l `compareHand'` r = if tL == tR then compareCard (handToList $ hand'ToHand l) (handToList $ hand'ToHand r) else tL `compare` tR
+l `compareHand'` r = if tL == tR then compare (fmap (\card -> if card == J then Joker else card) . handToList $ hand'ToHand l) (fmap (\card -> if card == J then Joker else card) . handToList $ hand'ToHand r) else tL `compare` tR
   where
     tL = getTypeWithJoker l
     tR = getTypeWithJoker r
@@ -193,6 +193,12 @@ partII = do
         Left err -> putStrLn $ "Error while parsing: " ++ err
         Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn sortPartII input) [1 ..])
 
+--        248750699
+-- it :: ()
+-- λ> Y2023.Day7.partII'
+-- 248696167
+
+-- (Row 22694 574,121),(Row 267J9 69,122)
 partII' :: IO ()
 partII' = do
     rawInput <- TIO.readFile "data/2023/day7.txt"
@@ -200,3 +206,5 @@ partII' = do
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
         Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn (\(Row h _) -> handToHand' h) input) [1 ..])
+
+-- Right input -> print( zip (sortOn (\(Row h _) -> handToHand' h) input) [1..] \\  zip (sortOn sortPartII input) [1..] )
