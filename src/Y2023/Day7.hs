@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Y2023.Day7 where
@@ -7,12 +8,14 @@ import Control.Applicative (many, (<|>))
 import Control.Lens.Each (each)
 import Control.Lens.Fold (toListOf)
 import Data.Attoparsec.Text
+import Data.Foldable (toList)
 import Data.List (sort, sortBy, sortOn)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
+import Data.Ord (Down (..))
 import Data.Text.IO qualified as TIO
 
-data Card = One | Two | Three | Four | Five | Six | Seven | Eight | Nine | T | J | Q | K | A
+data Card = Joker | One | Two | Three | Four | Five | Six | Seven | Eight | Nine | T | J | Q | K | A
     deriving stock (Eq, Ord, Enum, Bounded)
 
 instance Show Card where
@@ -30,6 +33,7 @@ instance Show Card where
     show Three = "3"
     show Two = "2"
     show One = "1"
+    show Joker = "J"
 
 data Type = HighCard | OnePair | TwoPair | ThreeOfKind | FullHouse | FourOfKind | FiveOfKind
     deriving stock (Show, Eq, Ord, Enum, Bounded)
@@ -154,6 +158,20 @@ getTypeWithJoker = beforeType . addJoker . foldCard
         2 : _ -> OnePair
         _ -> HighCard
 
+-- | Build a frequency map
+freqs :: (Foldable f, Ord a) => f a -> Map a Int
+freqs = M.fromListWith (+) . map (,1) . toList
+
+handType :: [Card] -> [Int]
+handType cs = maybe id addJoker numJokers $ sortOn Down (M.elems fs')
+  where
+    (numJokers, fs') =
+        M.alterF (,Nothing) Joker $
+            freqs cs
+    addJoker n = \case
+        [] -> [n]
+        x : xs -> (x + n) : xs
+
 partI :: IO ()
 partI = do
     rawInput <- TIO.readFile "data/2023/day7.txt"
@@ -162,9 +180,22 @@ partI = do
         Left err -> putStrLn $ "Error while parsing: " ++ err
         Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn (\(Row h _) -> h) input) [1 ..])
 
+sortPartII :: Row -> ([Int], [Card])
+sortPartII (Row hands _) = (handType cards, cards)
+  where
+    cards = map (\card -> if card == J then Joker else card) (handToList hands)
+
 partII :: IO ()
 partII = do
-    rawInput <- TIO.readFile "data/2023/day7-test.txt"
+    rawInput <- TIO.readFile "data/2023/day7.txt"
+    let e = parseOnly inputParser rawInput
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        Right input -> print (sum $ zipWith (\(Row _ bid) i -> i * bid) (sortOn sortPartII input) [1 ..])
+
+partII' :: IO ()
+partII' = do
+    rawInput <- TIO.readFile "data/2023/day7.txt"
     let e = parseOnly inputParser rawInput
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
