@@ -4,6 +4,7 @@ module Y2023.Day8 where
 
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
+import Data.Foldable (all)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Maybe (fromJust)
@@ -21,7 +22,9 @@ type Network = Map Node Path
 type Directions = [Direction]
 type Input = (Directions, Network)
 
-data World = World {getCurrentNode :: Node, getDirections :: Directions, getNetwork :: Map Node Path, getStep :: Int} deriving (Show)
+data World a = World {getCurrentNode :: a, getDirections :: Directions, getNetwork :: Map Node Path, getStep :: Int} deriving (Show)
+
+-- data World' = World' {getCurrentNodes :: [Node], getDirections' :: Directions, getNetwork' :: Map Node Path, getStep' :: Int} deriving (Show)
 
 directionParser :: Parser Direction
 directionParser = (char 'R' >> return R) <|> (char 'L' >> return L)
@@ -54,26 +57,46 @@ inputParser = do
     nodes <- nodesParser
     return (ds, M.fromList nodes)
 
-reachEnd :: World -> Bool
-reachEnd = (== "ZZZ") . getCurrentNode
+start :: Input -> a -> World a
+start (ds, network) p = World p ds network 0
 
-start :: Input -> World
-start (ds, network) = World "AAA" ds network 0
-
-next :: World -> World
-next (World c ds ns s) = World (f currentNode d) ds ns (s + 1)
+runI :: Input -> World Node
+runI input = h (start input "AAA")
   where
-    d = ds !! (s `mod` length ds)
-    currentNode = getPath $ fromJust (M.lookup c ns) :: (Node, Node)
-    f :: (Node, Node) -> Direction -> Node
-    f (l, _) L = l
-    f (_, r) R = r
-
-run :: Input -> World
-run input = h (start input)
-  where
-    h :: World -> World
+    h :: World Node -> World Node
     h w = if (reachEnd w) then w else (h (next w))
+
+    reachEnd :: World Node -> Bool
+    reachEnd = (== "ZZZ") . getCurrentNode
+
+    next :: World Node -> World Node
+    next (World c ds ns s) = World (f currentNode d) ds ns (s + 1)
+      where
+        d = ds !! (s `mod` length ds)
+        currentNode = getPath $ fromJust (M.lookup c ns) :: (Node, Node)
+        f :: (Node, Node) -> Direction -> Node
+        f (l, _) L = l
+        f (_, r) R = r
+
+runII :: Input -> World [Node]
+runII input = h (start input (filter ((== 'A') . last) $ M.keys network))
+  where
+    (dirs, network) = input
+
+    h :: World [Node] -> World [Node]
+    h w = if reachEnd w then w else h (next w)
+    reachEnd :: World [Node] -> Bool
+    reachEnd = all ((== 'Z') . last) . getCurrentNode
+
+    next :: World [Node] -> World [Node]
+    next (World nodes ds ns s) = World (map (`f` d) currentNode) ds ns (s + 1)
+      where
+        d = ds !! (s `mod` length ds)
+        currentNode = fmap (\c -> getPath $ fromJust (M.lookup c ns)) nodes :: [(Node, Node)]
+
+        f :: (Node, Node) -> Direction -> Node
+        f (l, _) L = l
+        f (_, r) R = r
 
 partI :: IO ()
 partI = do
@@ -81,4 +104,12 @@ partI = do
     let e = parseOnly inputParser rawInput
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
-        Right input -> print (getStep $ run input)
+        Right input -> print (getStep $ runI input)
+
+partII :: IO ()
+partII = do
+    rawInput <- TIO.readFile "data/2023/day8.txt"
+    let e = parseOnly inputParser rawInput
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        Right input -> print (getStep $ runII input)
