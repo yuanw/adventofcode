@@ -6,7 +6,8 @@ import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
-import Data.Text (Text)
+
+-- import Data.Text (Text)
 import Data.Text as T
 import Data.Text.IO qualified as TIO
 
@@ -23,21 +24,21 @@ directionParser :: Parser Direction
 directionParser = (char 'R' >> return R) <|> (char 'L' >> return L)
 
 directionsParser :: Parser Directions
-directionsParser = many $ directionParser <* endOfLine
+directionsParser = many directionParser
 
 nodeParser :: Parser (Node, Path)
 nodeParser = do
-    node <- takeTill (\x -> x /= ' ')
+    node <- takeTill (== ' ')
     skipSpace
     char '='
     skipSpace
     char '('
-    l <- takeTill (\x -> x /= ' ')
+    l <- takeTill (== ',')
     char ','
     skipSpace
-    r <- takeTill (\x -> x /= ' ')
+    r <- takeTill (== ')')
     char ')'
-    return $ (unpack node, Path (unpack l, unpack r))
+    return (T.unpack node, Path (T.unpack l, T.unpack r))
 
 nodesParser :: Parser [(Node, Path)]
 nodesParser = many $ nodeParser <* endOfLine
@@ -45,14 +46,15 @@ nodesParser = many $ nodeParser <* endOfLine
 inputParser :: Parser Input
 inputParser = do
     ds <- directionsParser
-    skipSpace
+    endOfLine
+    endOfLine
     nodes <- nodesParser
-    return $ (ds, M.fromList nodes)
+    return (ds, M.fromList nodes)
 
 partI :: IO ()
 partI = do
-    rawInput <- TIO.readFile "data/2023/day8-test.txt"
-    let e = parseOnly directionsParser rawInput
+    rawInput <- TIO.readFile "data/2023/day8.txt"
+    let e = parseOnly inputParser rawInput
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
         Right input -> print input
