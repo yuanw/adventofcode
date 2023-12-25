@@ -126,8 +126,9 @@ library
   hs-source-dirs: src
 
 executable aoc-executable
-  import:  shared
-  main-is: Main.hs
+  import:      shared
+  main-is:     Main.hs
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
 
 -- test-suite aoc-test
 --   type:           exitcode-stdio-1.0
