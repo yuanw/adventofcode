@@ -79,7 +79,7 @@ runI input = h (start input "AAA")
         f (_, r) R = r
 
 runII :: Input -> Int
-runII input = foldl (\a b -> lcm a b) 1 $ map (\n -> getStep (h (start input n))) (filter ((== 'A') . last) $ M.keys network)
+runII input = foldl lcm 1 $ map (getStep . h . start input) (filter ((== 'A') . last) $ M.keys network)
   where
     (dirs, network) = input
 
