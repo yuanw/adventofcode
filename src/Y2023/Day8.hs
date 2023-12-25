@@ -78,26 +78,29 @@ runI input = h (start input "AAA")
         f (l, _) L = l
         f (_, r) R = r
 
-runII :: Input -> World [Node]
-runII input = h (start input (filter ((== 'A') . last) $ M.keys network))
+runII :: Input -> Int
+runII input = foldl (\a b -> lcm a b) 1 $ map (\n -> getStep (h (start input n))) (filter ((== 'A') . last) $ M.keys network)
   where
     (dirs, network) = input
 
-    h :: World [Node] -> World [Node]
+    h :: World Node -> World Node
     h w = if reachEnd w then w else h (next w)
-    reachEnd :: World [Node] -> Bool
-    reachEnd = all ((== 'Z') . last) . getCurrentNode
+    reachEnd :: World Node -> Bool
+    reachEnd = ((== 'Z') . last) . getCurrentNode
 
-    next :: World [Node] -> World [Node]
-    next (World nodes ds ns s) = World (map (`f` d) currentNode) ds ns (s + 1)
+    next :: World Node -> World Node
+    next (World c ds ns s) = World (f currentNode d) ds ns (s + 1)
       where
         d = ds !! (s `mod` length ds)
-        currentNode = fmap (\c -> getPath $ fromJust (M.lookup c ns)) nodes :: [(Node, Node)]
-
+        currentNode = getPath $ fromJust (M.lookup c ns) :: (Node, Node)
         f :: (Node, Node) -> Direction -> Node
         f (l, _) L = l
         f (_, r) R = r
 
+-- lcm :: Int -> Int -> Int
+-- lcm a b = (a*b) `div` gcd a b
+--   -- where gcd :: Int -> Int -> Int
+--   --       gcd = undefined
 partI :: IO ()
 partI = do
     rawInput <- TIO.readFile "data/2023/day8.txt"
@@ -112,4 +115,4 @@ partII = do
     let e = parseOnly inputParser rawInput
     case e of
         Left err -> putStrLn $ "Error while parsing: " ++ err
-        Right input -> print (getStep $ runII input)
+        Right input -> print (runII input)
