@@ -8,7 +8,6 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Maybe (fromJust)
 
--- import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 
@@ -35,14 +34,14 @@ nodeParser :: Parser (Node, Path)
 nodeParser = do
     node <- takeTill (== ' ')
     skipSpace
-    char '='
+    _ <- char '='
     skipSpace
-    char '('
+    _ <- char '('
     l <- takeTill (== ',')
-    char ','
+    _ <- char ','
     skipSpace
     r <- takeTill (== ')')
-    char ')'
+    _ <- char ')'
     return (T.unpack node, Path (T.unpack l, T.unpack r))
 
 nodesParser :: Parser [(Node, Path)]
@@ -80,7 +79,7 @@ runI input = h (start input "AAA")
 runII :: Input -> Int
 runII input = foldl lcm 1 $ map (getStep . h . start input) (filter ((== 'A') . last) $ M.keys network)
   where
-    (dirs, network) = input
+    (_, network) = input
 
     h :: World Node -> World Node
     h w = if reachEnd w then w else h (next w)

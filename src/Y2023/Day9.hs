@@ -1,1 +1,58 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Y2023.Day9 where
+
+import Control.Applicative (many, (<|>))
+import Data.Attoparsec.Text
+import Data.Foldable (all)
+import Data.Text qualified as T
+import Data.Text.IO qualified as TIO
+
+type Input = [[Int]]
+
+rowParser :: Parser [Int]
+rowParser = do
+    nums <- (signed decimal) `sepBy` (char ' ')
+    return nums
+
+inputParser :: Parser [[Int]]
+inputParser = many $ rowParser <* endOfLine
+
+findSeq :: [Int] -> [[Int]]
+findSeq a = f a []
+  where
+    h :: [Int] -> [Int]
+    h n = [n !! i - n !! (i - 1) | i <- [1 .. length n - 1]]
+
+    reachEnd :: [Int] -> Bool
+    reachEnd = all (== 0)
+
+    f :: [Int] -> [[Int]] -> [[Int]]
+    f s accum = if reachEnd s then accum else f (h s) (accum ++ [s])
+
+-- choose k from n
+choose :: Int -> Int -> Int
+choose n 0 = 1
+choose n 1 = n
+choose 0 _ = 0
+choose n k = choose (n - 1) (k - 1) * n `div` k
+
+-- https://www.youtube.com/watch?app=desktop&v=4AuV93LOPcE&t=1679s
+forward :: Int -> [Int] -> Int
+forward n row = foldr (\(x, y) accum -> accum + x * (choose n y)) 0 factors
+  where
+    factors = zip row [0 ..] :: [(Int, Int)]
+
+findNext :: [Int] -> Int
+findNext numbers = forward (length numbers) factors
+  where
+    seqs = findSeq numbers
+    factors = map head seqs
+
+partI :: IO ()
+partI = do
+    rawInput <- TIO.readFile "data/2023/day9.txt"
+    let e = parseOnly inputParser rawInput
+    case e of
+        Left err -> putStrLn $ "Error while parsing: " ++ err
+        Right input -> print (sum $ map findNext input)
