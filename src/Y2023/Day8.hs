@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Y2023.Day8 where
+module Y2023.Day8 (partI, partII) where
 
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text
-import Data.Foldable (all)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Maybe (fromJust)
