@@ -80,6 +80,7 @@ common shared
     , safe
     , split
     , text
+    , transformers
     , vector
 
   hs-source-dirs:     src
