@@ -2,10 +2,9 @@
 
 module Y2023.Day9 where
 
-import Control.Applicative (many, (<|>))
+import Control.Applicative (many)
 import Data.Attoparsec.Text
 import Data.Foldable (all)
-import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 
 type Input = [[Int]]
