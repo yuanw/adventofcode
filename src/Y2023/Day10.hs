@@ -40,12 +40,6 @@ readGraph grid = M.fromList . filter (\(_, ps) -> not (null ps)) . map (\(p, ps)
     adjList 'F' (x, y) = ((x, y), [(x, y + 1), (x + 1, y)])
     adjList _ p = (p, [])
 
-startPoint :: Grid -> Point
-startPoint grid = head [(i, j) | i <- [0 .. row - 1], j <- [0 .. col - 1], ((grid !! i) !! j) == 'S']
-  where
-    col = length $ head grid
-    row = length grid
-
 -- level = {s: 0}
 -- parent = {s: None}
 -- frontiers = [s]
@@ -90,8 +84,14 @@ fillGrid grid lvlMap = map (map snd) sorted
     col = length $ head grid
     row = length grid
 
-getChar' :: Grid -> Point -> Char
-getChar' grid (x, y) = (grid !! x) !! y
+getCharFromGrid :: Grid -> Point -> Char
+getCharFromGrid grid (x, y) = (grid !! x) !! y
+
+startPoint :: Grid -> Point
+startPoint grid = head [(i, j) | i <- [0 .. row - 1], j <- [0 .. col - 1], getCharFromGrid grid (i, j) == 'S']
+  where
+    col = length $ head grid
+    row = length grid
 
 drawGrid :: (Show a) => [[a]] -> IO ()
 drawGrid grid = forM_ grid (\row -> putStr (filter (\c -> c /= '\'' && c /= '"') $ concatMap show row) >> putStr "\n") >> putStr "\n"
