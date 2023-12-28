@@ -77,7 +77,7 @@ bfs frontiers = do
     -- _ <- liftIO $ print ("frontiers  " <> show frontiers)
     -- _ <- liftIO $ print ("nextNodes " <> show nextNodes)
     -- _ <- liftIO $ print ("newFrontiers " <> show newFrontiers)
-    _ <- liftIO $ drawGrid (fillGrid grid newLvlMap)
+    -- _ <- liftIO $ drawGrid (fillGrid grid newLvlMap  )
     put (MazeState grid newLvlMap g (rd + 1))
     bfs newFrontiers
 
@@ -133,7 +133,7 @@ testInput4 =
 
 partI :: IO ()
 partI = do
-    grid <- lines <$> return testInput2
+    grid <- lines <$> readFile "data/2023/day10.txt"
 
     let s = startPoint grid
         state@(MazeState _ _ m' _) = startMazeState grid s
@@ -141,7 +141,7 @@ partI = do
     -- print m'
     (m, l) <- evalStateT (bfs [s]) state
     let g' = fillGrid grid m
-    print (maximum $ M.elems m)
+    forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
 
 -- -- print s
 -- drawGrid g'
