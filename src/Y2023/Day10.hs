@@ -5,15 +5,19 @@ import Control.Monad.IO.Class
 
 -- import Control.Monad.State
 import Control.Monad.Trans.State
-import Data.List (groupBy, sortOn)
+import Data.List (groupBy, sortOn, unfoldr)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
-import Data.Maybe (fromMaybe, maybe)
+import Data.Maybe (fromMaybe, isJust, maybe)
 
 type Point = (Int, Int)
 type Grid = [String]
 
 type Graph = Map Point [Point]
+
+data Dir = N | S | W | E deriving (Show)
+
+data Path = Path {getCurrent :: Point, getPrev :: Maybe Point} deriving (Show)
 
 {- | is a vertical pipe connecting north and south.
 - is a horizontal pipe connecting east and west.
@@ -93,6 +97,61 @@ startPoint grid = head [(i, j) | i <- [0 .. row - 1], j <- [0 .. col - 1], getCh
     col = length $ head grid
     row = length grid
 
+move :: Point -> Dir -> Point
+move (x, y) N = (x - 1, y)
+move (x, y) S = (x + 1, y)
+move (x, y) W = (x, y - 1)
+move (x, y) E = (x, y + 1)
+
+isBound :: Point -> Grid -> Bool
+isBound (x, y) grid = (0 <= x) && (x < row) && (0 <= y) && (y < col)
+  where
+    col = length $ head grid
+    row = length grid
+
+{- | is a vertical pipe connecting north and south.
+- is a horizontal pipe connecting east and west.
+L is a 90-degree bend connecting north and east.
+J is a 90-degree bend connecting north and west.
+7 is a 90-degree bend connecting south and west.
+F is a 90-degree bend connecting south and east.
+. is ground; there is no pipe in this tile.
+S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+-}
+possiblePath :: (Point, Dir, Char) -> Bool
+possiblePath (_, S, '|') = True
+possiblePath (_, N, '|') = True
+possiblePath (_, E, '-') = True
+possiblePath (_, W, '-') = True
+possiblePath (_, S, 'L') = True
+possiblePath (_, W, 'L') = True
+possiblePath (_, S, 'J') = True
+possiblePath (_, E, 'J') = True
+possiblePath (_, N, '7') = True
+possiblePath (_, E, '7') = True
+possiblePath (_, N, 'F') = True
+possiblePath (_, W, 'F') = True
+-- possiblePath (_, _ , 'S') = True
+possiblePath _ = False
+
+neibours :: Point -> Grid -> [(Point, Dir, Char)]
+neibours p grid = filter possiblePath . map (\(p, d) -> (p, d, getCharFromGrid grid p)) . filter ((`isBound` grid) . fst) $ map (\d -> (move p d, d)) dirs
+  where
+    dirs = [N, S, W, E]
+
+loop :: Grid -> [Path]
+loop grid = unfoldr go s
+  where
+    s = Path (startPoint grid) Nothing
+    go :: Path -> Maybe (Path, Path)
+    go p = if isAtStartPoint (startPoint grid) p then Nothing else Just (nextPoint p grid, nextPoint p grid)
+
+isAtStartPoint :: Point -> Path -> Bool
+isAtStartPoint p (Path p' l) = p == p' && isJust l
+
+nextPoint :: Path -> Grid -> Path
+nextPoint (Path p l) grid = (\(p', _, _) -> Path p' (Just p)) . head . filter (\(p', d, c) -> maybe True (/= p') l) $ neibours p grid
+
 drawGrid :: (Show a) => [[a]] -> IO ()
 drawGrid grid = forM_ grid (\row -> putStr (filter (\c -> c /= '\'' && c /= '"') $ concatMap show row) >> putStr "\n") >> putStr "\n"
 testInput1 :: String
@@ -134,14 +193,17 @@ testInput4 =
 partI :: IO ()
 partI = do
     grid <- lines <$> readFile "data/2023/day10.txt"
+    -- grid <- lines <$> return testInput2
+    print (neibours (startPoint grid) grid)
 
-    let s = startPoint grid
-        state@(MazeState _ _ m' _) = startMazeState grid s
+-- print ( loop  grid)
+-- let s = startPoint grid
+--     state@(MazeState _ _ m' _) = startMazeState grid s
 
-    -- print m'
-    (m, l) <- evalStateT (bfs [s]) state
-    let g' = fillGrid grid m
-    forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
+-- -- print m'
+-- (m, l) <- evalStateT (bfs [s]) state
+-- let g' = fillGrid grid m
+-- forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
 
 -- -- print s
 -- drawGrid g'
