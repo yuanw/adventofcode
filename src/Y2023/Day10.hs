@@ -58,16 +58,16 @@ readGraph grid = M.fromList . filter (\(_, ps) -> not (null ps)) . map (\(p, ps)
 --                 next_nodes.append(v)
 --     froniters = next_nodes
 --     i += 1
-data MazeState = MazeState Grid (Map Point Int) Graph Int
-startMazeState :: Grid -> Point -> MazeState
-startMazeState grid s = MazeState grid (M.singleton s 0) (readGraph grid) 1
+data MazeState = MazeState Grid (Map Point Int) Graph Int Point
+startMazeState :: Grid -> Point -> Point -> Point -> MazeState
+startMazeState grid s x y = MazeState grid (M.fromList [(s, 0), (x, 1)]) (readGraph grid) 2 y
 
 bfs :: [Point] -> StateT MazeState IO (Map Point Int, Int)
 bfs [] = do
-    MazeState g m _ rd <- get
-    return (m, rd)
+    MazeState g m _ _ d <- get
+    return (m, fromMaybe 0 (M.lookup d m))
 bfs frontiers = do
-    MazeState grid lvlMap g rd <- get
+    MazeState grid lvlMap g rd dest <- get
     -- _ <- liftIO $ print ("lvl " <> (show rd))
     let nextNodes = filter (`M.member` g) $ frontiers >>= (\p -> fromMaybe [] $ M.lookup p g)
         (newLvlMap, newFrontiers) = foldl (\(m, nf) p -> if M.member p m then (m, nf) else (M.insert p rd m, p : nf)) (lvlMap, []) nextNodes :: (Map Point Int, [Point])
@@ -76,7 +76,7 @@ bfs frontiers = do
     -- _ <- liftIO $ print ("nextNodes " <> show nextNodes)
     -- _ <- liftIO $ print ("newFrontiers " <> show newFrontiers)
     -- _ <- liftIO $ drawGrid (fillGrid grid newLvlMap  )
-    put (MazeState grid newLvlMap g (rd + 1))
+    put (MazeState grid newLvlMap g (rd + 1) dest)
     bfs newFrontiers
 
 fillGrid :: Grid -> Map Point Int -> [[String]]
@@ -192,15 +192,20 @@ testInput4 =
 
 partI :: IO ()
 partI = do
-    grid <- lines <$> readFile "data/2023/day10.txt"
-    -- grid <- lines <$> return testInput2
+    grid <- lines <$> readFile "data/2023/day10-3-test.txt"
+    -- grid <- lines <$> return testInput4
     print (neibours (startPoint grid) grid)
     let s = startPoint grid
-        state@(MazeState _ _ m' _) = startMazeState grid s
+        ns = map (\(p, _, _) -> p) $ neibours s grid
+        x = head ns
+        y = ns !! 1
+        state@(MazeState _ _ m' _ _) = startMazeState grid s x y
     -- print m'
-    (m, l) <- evalStateT (bfs [s]) state
+    (m, l) <- evalStateT (bfs [x]) state
     let g' = fillGrid grid m
     -- forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
     -- print s
     drawGrid g'
-    drawGrid (fillGrid grid (M.singleton s 0))
+
+-- drawGrid (fillGrid grid (M.singleton s 0))
+-- print ((l +1) `div` 2)
