@@ -195,18 +195,12 @@ partI = do
     grid <- lines <$> readFile "data/2023/day10.txt"
     -- grid <- lines <$> return testInput2
     print (neibours (startPoint grid) grid)
-
--- print ( loop  grid)
--- let s = startPoint grid
---     state@(MazeState _ _ m' _) = startMazeState grid s
-
--- -- print m'
--- (m, l) <- evalStateT (bfs [s]) state
--- let g' = fillGrid grid m
--- forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
-
--- -- print s
--- drawGrid g'
--- drawGrid (fillGrid grid (M.singleton s 0))
-
--- drawGrid g'
+    let s = startPoint grid
+        state@(MazeState _ _ m' _) = startMazeState grid s
+    -- print m'
+    (m, l) <- evalStateT (bfs [s]) state
+    let g' = fillGrid grid m
+    -- forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
+    -- print s
+    drawGrid g'
+    drawGrid (fillGrid grid (M.singleton s 0))
