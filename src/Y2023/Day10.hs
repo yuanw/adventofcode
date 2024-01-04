@@ -1,14 +1,17 @@
 module Y2023.Day10 where
 
 import Control.Monad
-import Control.Monad.IO.Class
+
+-- import Control.Monad.IO.Class
 
 -- import Control.Monad.State
 import Control.Monad.Trans.State
 import Data.List (groupBy, sortOn, unfoldr)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
-import Data.Maybe (fromMaybe, isJust, maybe)
+import Data.Maybe (fromMaybe, isJust)
+import Data.Set (Set)
+import Data.Set qualified as S
 
 type Point = (Int, Int)
 type Grid = [String]
@@ -139,19 +142,6 @@ neibours p grid = filter possiblePath . map (\(p, d) -> (p, d, getCharFromGrid g
   where
     dirs = [N, S, W, E]
 
-loop :: Grid -> [Path]
-loop grid = unfoldr go s
-  where
-    s = Path (startPoint grid) Nothing
-    go :: Path -> Maybe (Path, Path)
-    go p = if isAtStartPoint (startPoint grid) p then Nothing else Just (nextPoint p grid, nextPoint p grid)
-
-isAtStartPoint :: Point -> Path -> Bool
-isAtStartPoint p (Path p' l) = p == p' && isJust l
-
-nextPoint :: Path -> Grid -> Path
-nextPoint (Path p l) grid = (\(p', _, _) -> Path p' (Just p)) . head . filter (\(p', d, c) -> maybe True (/= p') l) $ neibours p grid
-
 drawGrid :: (Show a) => [[a]] -> IO ()
 drawGrid grid = forM_ grid (\row -> putStr (filter (\c -> c /= '\'' && c /= '"') $ concatMap show row) >> putStr "\n") >> putStr "\n"
 testInput1 :: String
@@ -192,9 +182,8 @@ testInput4 =
 
 partI :: IO ()
 partI = do
-    grid <- lines <$> readFile "data/2023/day10-3-test.txt"
-    -- grid <- lines <$> return testInput4
-    print (neibours (startPoint grid) grid)
+    -- grid <- lines <$> readFile "data/2023/day10-3-test.txt"
+    grid <- lines <$> return testInput4
     let s = startPoint grid
         ns = map (\(p, _, _) -> p) $ neibours s grid
         x = head ns
@@ -202,10 +191,42 @@ partI = do
         state@(MazeState _ _ m' _ _) = startMazeState grid s x y
     -- print m'
     (m, l) <- evalStateT (bfs [x]) state
+    print m
     let g' = fillGrid grid m
     -- forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
     -- print s
     drawGrid g'
+    print ((l + 1) `div` 2)
 
--- drawGrid (fillGrid grid (M.singleton s 0))
--- print ((l +1) `div` 2)
+partII = do
+    grid <- lines <$> readFile "data/2023/day10.txt"
+    -- grid <- lines <$> return testInput4
+    let s = startPoint grid
+        ns = map (\(p, _, _) -> p) $ neibours s grid
+        x = head ns
+        y = ns !! 1
+        state@(MazeState _ _ m' _ _) = startMazeState grid s x y
+    -- print m'
+    (m, _) <- evalStateT (bfs [x]) state
+    let paths = getPoints m
+        results = part2 paths
+    -- forM_ (groupBy (\a b -> snd a == snd b) $ M.toList m) print
+    -- print s
+    print results
+
+getPoints :: Map Point Int -> [Point]
+getPoints = map fst . sortOn snd . M.toList
+
+-- pickT :: Int -> Int -> Int
+-- pickT area b = ( ( abs area )+ 1) - (b `div` 2)
+
+-- shoeLace :: [Point] -> Int
+-- shoeLace [_] = 0
+-- shoeLace ((x1, y1) : (x2, y2) : xs) = (x1*y2 - x2*y1 + shoeLace ((x2, y2) : xs)) `div` 2
+shoeLace :: [(Int, Int)] -> Int
+shoeLace [_] = 0
+shoeLace ((x1, y1) : (x2, y2) : xs) = (y1 + y2) * (x1 - x2) + shoeLace ((x2, y2) : xs)
+
+---  Pick's Theorem
+part2 :: [Point] -> Int
+part2 path = (abs (shoeLace path) - length path + 2) `div` 2
