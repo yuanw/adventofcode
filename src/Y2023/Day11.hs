@@ -1,7 +1,9 @@
 module Y2023.Day11 where
 
 import Data.Foldable (forM_)
-import Data.List (subsequences)
+import Data.IntSet qualified as IS
+import Data.List (subsequences, tails)
+import Data.Set.NonEmpty (NESet)
 
 type Grid = [String]
 type Point = (Int, Int)
@@ -65,12 +67,16 @@ subsequencesOfSize n xs =
 
 partI :: IO ()
 partI = do
-    grid <- lines <$> readFile "data/2023/day11.txt"
-    let grid' = expand (1000000 - 1) grid
+    grid <- lines <$> readFile "data/2023/day11-test.txt"
+    -- let grid' = expand (1000000 - 1) grid
     -- drawGrid grid
     -- drawGrid (expand 1 grid)
     -- drawGrid grid'
-    -- print (findGalaxies grid)
-    -- print (manhattanDis (6, 1) (11, 5))
-    let ds = map (uncurry manhattanDis) . allCombinations $ findGalaxies grid'
-    print (sum ds)
+    print (findGalaxies grid)
+    print (findGalaxies $ expand 1 grid)
+    print (findGalaxies $ expand 9 grid)
+    print (findGalaxies $ expand 99 grid)
+
+-- print (manhattanDis (6, 1) (11, 5))
+-- let ds = map (uncurry manhattanDis) . allCombinations $ findGalaxies grid'
+-- print (sum ds)
