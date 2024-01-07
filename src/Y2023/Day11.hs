@@ -17,18 +17,18 @@ colsNoGalaxies grid = [i | i <- [0 .. (cols - 1)], '#' `notElem` [(grid !! j) !!
     rows = length grid
     cols = length (head grid)
 
-expand :: Grid -> Grid
-expand grid = expandCol (expandRow grid)
+expand :: Int -> Grid -> Grid
+expand size grid = expandCol (expandRow grid)
   where
     expandCol :: Grid -> Grid
     expandCol = map expandRowByRow
     cols = length (head grid)
-    expandRowByRow row = foldl (\r i -> take i r ++ "." ++ drop i r) row colNeedExpand
-    colNeedExpand = zipWith (+) (colsNoGalaxies grid) [0 ..]
+    expandRowByRow row = foldl (\r i -> take i r ++ replicate size '.' ++ drop i r) row colNeedExpand
+    colNeedExpand = zipWith (\a b -> a + (b * size)) (colsNoGalaxies grid) [0 ..]
 
     expandRow :: Grid -> Grid
-    expandRow g = foldl (\g' i -> take i g' ++ [replicate cols '.'] ++ drop i g') g rowsNeedExpand
-    rowsNeedExpand = zipWith (+) (rowsNoGalaxies grid) [0 ..]
+    expandRow g = foldl (\g' i -> take i g' ++ replicate size (replicate cols '.') ++ drop i g') g rowsNeedExpand
+    rowsNeedExpand = zipWith (\a b -> a + (b * size)) (rowsNoGalaxies grid) [0 ..]
 
 drawGrid :: (Show a) => [[a]] -> IO ()
 drawGrid grid = forM_ grid (\row -> putStr (filter (\c -> c /= '\'' && c /= '"') $ concatMap show row) >> putStr "\n") >> putStr "\n"
@@ -65,7 +65,12 @@ subsequencesOfSize n xs =
 
 partI :: IO ()
 partI = do
-    grid <- expand . lines <$> readFile "data/2023/day11.txt"
+    grid <- lines <$> readFile "data/2023/day11.txt"
+    let grid' = expand (1000000 - 1) grid
+    -- drawGrid grid
+    -- drawGrid (expand 1 grid)
+    -- drawGrid grid'
     -- print (findGalaxies grid)
     -- print (manhattanDis (6, 1) (11, 5))
-    print (sum . map (uncurry manhattanDis) . allCombinations $ findGalaxies grid)
+    let ds = map (uncurry manhattanDis) . allCombinations $ findGalaxies grid'
+    print (sum ds)
