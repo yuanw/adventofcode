@@ -1,6 +1,7 @@
 module Y2023.Day11 where
 
 import Data.Foldable (forM_)
+import Data.List (subsequences)
 
 type Grid = [String]
 type Point = (Int, Int)
@@ -41,7 +42,30 @@ findGalaxies grid = [(i, j) | i <- [0 .. (rows - 1)], j <- [0 .. (cols - 1)], ge
     rows = length grid
     cols = length (head grid)
 
+allCombinations :: [Point] -> [(Point, Point)]
+-- allCombinations = map (\ps -> (head ps, ps !! 1))  . filter ( (== 2) . length)  . subsequences
+allCombinations = map (\ps -> (head ps, ps !! 1)) . subsequencesOfSize 2
+manhattanDis :: Point -> Point -> Int
+manhattanDis (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
+
+subsequencesOfSize :: Int -> [a] -> [[a]]
+subsequencesOfSize n xs =
+    let l = length xs
+     in if (n > l)
+            then []
+            else subsequencesBySize xs !! (l - n)
+  where
+    subsequencesBySize [] = [[[]]]
+    subsequencesBySize (x : xs') =
+        let next = subsequencesBySize xs'
+         in zipWith
+                (++)
+                ([] : next)
+                (map (map (x :)) next ++ [[]])
+
 partI :: IO ()
 partI = do
-    grid <- lines <$> readFile "data/2023/day11-test.txt"
-    print (findGalaxies grid)
+    grid <- expand . lines <$> readFile "data/2023/day11.txt"
+    -- print (findGalaxies grid)
+    -- print (manhattanDis (6, 1) (11, 5))
+    print (sum . map (uncurry manhattanDis) . allCombinations $ findGalaxies grid)
