@@ -38,5 +38,5 @@ partI = do
 
 partII :: IO ()
 partII = do
-    a <- uncurry accumMap . foldStep' . readInput <$> readFile "data/2024/gday1.txt"
+    a <- uncurry accumMap . foldStep' . readInput <$> readFile "data/2024/day1.txt"
     print a
