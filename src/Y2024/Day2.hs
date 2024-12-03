@@ -18,7 +18,7 @@ union (Seq _ Dec _) (Seq _ Inc _) = badSeq
 union (Seq Nothing Unknown True) other = other
 union other (Seq Nothing Unknown True) = other
 union (Seq (Just a) Unknown True) (Seq (Just b) Unknown True) = if a > b && b + 4 > a then (Seq (Just b) Dec True) else (if b > a && a + 4 > b then (Seq (Just b) Inc True) else badSeq)
-union (Seq (Just a) Inc True) (Seq (Just b) _ _) = if b > a && a + 4 > a then (Seq (Just b) Inc True) else badSeq
+union (Seq (Just a) Inc True) (Seq (Just b) _ _) = if b > a && a + 4 > b then (Seq (Just b) Inc True) else badSeq
 union (Seq (Just a) Dec True) (Seq (Just b) _ _) = if a > b && b + 4 > a then (Seq (Just b) Dec True) else badSeq
 union _ _ = badSeq
 
@@ -32,13 +32,12 @@ isSafe :: Seq -> Bool
 isSafe (Seq _ _ s) = s
 
 process :: [String] -> Seq
-process = foldr (\num seq' -> seq' <> (lift . readInt $ num)) (Seq Nothing Unknown True)
+process = foldl (\seq' num -> seq' <> (lift . readInt $ num)) (Seq Nothing Unknown True)
   where
     readInt :: String -> Int
     readInt = read
 
 partI :: IO ()
 partI = do
-    inputs <- map words . lines <$> readFile "data/2024/test-day2.txt"
-    print inputs
-    print $ filter isSafe $ map process inputs
+    inputs <- map words . lines <$> readFile "data/2024/day2.txt"
+    print $ length . filter isSafe $ map process inputs
