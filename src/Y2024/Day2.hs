@@ -37,7 +37,24 @@ process = foldl (\seq' num -> seq' <> (lift . readInt $ num)) (Seq Nothing Unkno
     readInt :: String -> Int
     readInt = read
 
+process' :: [String] -> Bool
+process' xs = (isSafe (process xs)) || (any isSafe [(process ys) | ys <- rest xs])
+
 partI :: IO ()
 partI = do
     inputs <- map words . lines <$> readFile "data/2024/day2.txt"
     print $ length . filter isSafe $ map process inputs
+
+partII :: IO ()
+partII = do
+    inputs <- map words . lines <$> readFile "data/2024/day2.txt"
+    print $ length . filter id $ map process' inputs
+
+rest :: [String] -> [[String]]
+rest xs = map (map snd) [removeItem i (zip [0 ..] xs) | i <- [0 .. (length xs)]]
+  where
+    removeItem :: Int -> [(Int, String)] -> [(Int, String)]
+    removeItem _ [] = []
+    removeItem x ((index, y) : ys)
+        | x == index = ys
+        | otherwise = (index, y) : removeItem x ys
