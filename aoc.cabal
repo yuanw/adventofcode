@@ -77,6 +77,7 @@ common shared
     , containers
     , data-interval
     , lens
+    , megaparsec
     , mtl
     , nonempty-containers
     , safe
@@ -113,6 +114,7 @@ common shared
     Y2023.Day9
     Y2024.Day1
     Y2024.Day2
+    Y2024.Day3
 
 --     Y2021.Day10
 --     Y2021.Day11
