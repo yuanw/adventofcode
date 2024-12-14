@@ -6,18 +6,19 @@ import Data.Text (Text)
 import Data.Void (Void)
 import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as PC
+import Text.Megaparsec.Char.Lexer qualified as PL
 
-type StringParser = P.Parsec Void String
+type CharParser = P.Parsec Void String
 
-mulParser :: StringParser (Int, Int)
-mulParser = do
-    _ <- PC.string "mul("
-    a <- P.decimal
-    _ <- PC.char ','
-    b <- P.decimal
-    _ <- PC.string ")"
-    return (a, b)
+parseMaybeLenient :: P.Parsec Void s a -> s -> Maybe a
+parseMaybeLenient p = eitherToMaybe . P.parse p "parseMaybeLenient"
 
--- P.try . P.skipManyTill P.anySingle . P.try
--- mulsParser :: Parser [(Int, Int)]
--- mulsParser = try .
+pDropUntil :: (P.Stream s, Ord e) => P.Parsec e s end -> P.Parsec e s end
+pDropUntil = P.try . P.skipManyTill P.anySingle . P.try
+
+-- | Alias for 'parseMaybeLenient'
+parseMaybe' :: P.Parsec Void s a -> s -> Maybe a
+parseMaybe' = parseMaybeLenient
+
+parseMul :: CharParser Int
+parseMul = product <$> P.between "mul(" ")" (replicate 2 PL.decimal `sequenceSepBy` ",")
