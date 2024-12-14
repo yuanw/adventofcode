@@ -3,11 +3,9 @@
 module Y2024.Day3 where
 
 import Control.Applicative
-import Data.Text (Text)
 import Data.Traversable
 import Data.Void (Void)
 import Text.Megaparsec qualified as P
-import Text.Megaparsec.Char qualified as PC
 import Text.Megaparsec.Char.Lexer qualified as PL
 
 type CharParser = P.Parsec Void String
@@ -35,3 +33,27 @@ sequenceSepBy xs sep = sequenceA . snd $ mapAccumR go False xs
     go addSep x = (True, if addSep then x' <* sep else x')
       where
         x' = P.notFollowedBy sep *> P.try x
+
+doOrDoNot :: CharParser Int
+doOrDoNot = sum <$> goEnabled
+  where
+    goDisabled :: CharParser [Int]
+    goDisabled = P.option [] . pDropUntil $ "do()" *> goEnabled
+    goEnabled :: CharParser [Int]
+    goEnabled =
+        P.option [] . pDropUntil . P.choice $
+            [ "don't()" *> goDisabled
+            , (:) <$> parseMul <*> goEnabled
+            ]
+
+partI :: IO ()
+partI = do
+    test <- readFile "data/2024/test-day3.txt"
+    --   print $ (parseMaybe' $ sum <$> many pDropUntil parseMul) test
+    P.parseTest (sum <$> many (pDropUntil parseMul)) test
+
+partII :: IO ()
+partII = do
+    test <- readFile "data/2024/test-day3.txt"
+    --   print $ (parseMaybe' $ sum <$> many pDropUntil parseMul) test
+    P.parseTest doOrDoNot test
