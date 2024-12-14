@@ -22,3 +22,11 @@ parseMaybe' = parseMaybeLenient
 
 parseMul :: CharParser Int
 parseMul = product <$> P.between "mul(" ")" (replicate 2 PL.decimal `sequenceSepBy` ",")
+
+sequenceSepBy ::
+    (Traversable t, P.Stream s, Ord e) => t (P.Parsec e s a) -> P.Parsec e s sep -> P.Parsec e s (t a)
+sequenceSepBy xs sep = sequenceA . snd $ mapAccumR go False xs
+  where
+    go addSep x = (True, if addSep then x' <* sep else x')
+      where
+        x' = P.notFollowedBy sep *> P.try x
