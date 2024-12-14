@@ -2,13 +2,18 @@
 
 module Y2024.Day3 where
 
+import Control.Applicative
 import Data.Text (Text)
+import Data.Traversable
 import Data.Void (Void)
 import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as PC
 import Text.Megaparsec.Char.Lexer qualified as PL
 
 type CharParser = P.Parsec Void String
+
+eitherToMaybe :: (Alternative m) => Either e a -> m a
+eitherToMaybe = either (const empty) pure
 
 parseMaybeLenient :: P.Parsec Void s a -> s -> Maybe a
 parseMaybeLenient p = eitherToMaybe . P.parse p "parseMaybeLenient"
