@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+module Y2024.Day3 where
+
 import Control.Applicative
 import Data.Text (Text)
 import Data.Traversable
