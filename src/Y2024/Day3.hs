@@ -48,12 +48,12 @@ doOrDoNot = sum <$> goEnabled
 
 partI :: IO ()
 partI = do
-    test <- readFile "data/2024/test-day3.txt"
+    test <- readFile "data/2024/day3.txt"
     --   print $ (parseMaybe' $ sum <$> many pDropUntil parseMul) test
     P.parseTest (sum <$> many (pDropUntil parseMul)) test
 
 partII :: IO ()
 partII = do
-    test <- readFile "data/2024/test-day3.txt"
+    test <- readFile "data/2024/day3.txt"
     --   print $ (parseMaybe' $ sum <$> many pDropUntil parseMul) test
     P.parseTest doOrDoNot test
