@@ -27,9 +27,9 @@ move (x, y) NorthWest = (x - 1, y - 1)
 isXMas :: Point -> Grid -> Direction -> Bool
 isXMas x grid direction = (findCharByPoint x grid == Just 'X') && (findCharByPoint m grid == Just 'M') && (findCharByPoint a grid == Just 'A') && (findCharByPoint s grid == Just 'S')
   where
-    m = (move x direction)
-    a = (move m direction)
-    s = (move a direction)
+    m = move x direction
+    a = move m direction
+    s = move a direction
 
 isCrossMAS :: Point -> Grid -> Bool
 isCrossMAS a grid =
