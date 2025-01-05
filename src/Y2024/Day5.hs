@@ -53,5 +53,4 @@ parseInput = do
 partI :: IO ()
 partI = do
     test <- readFile "data/2024/test-day5.txt"
-    -- P.parseTest parseInput test
-    print test
+    P.parseTest parseInput test

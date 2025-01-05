@@ -76,6 +76,7 @@ common shared
     , bytestring
     , containers
     , data-interval
+    , fql
     , lens
     , linear
     , megaparsec
