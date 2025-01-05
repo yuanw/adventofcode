@@ -3,13 +3,14 @@ module Y2024.Day5 where
 import Data.Map qualified as M
 import Data.Traversable
 import Data.Void (Void)
+import Linear.V2 (V2 (..))
 import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as P
 import Text.Megaparsec.Char.Lexer qualified as PL
 
 type CharParser = P.Parsec Void String
 
-type Input = ([(Int, Int)], [[Int]])
+type Input = ([V2 Int], [[Int]])
 
 -- | 'sepEndBy' but automatically exclude the separator from the internal parser
 sepEndBy' :: (P.Stream s, Ord e) => P.Parsec e s a -> P.Parsec e s sep -> P.Parsec e s [a]
@@ -42,14 +43,15 @@ sequenceSepBy xs sep = sequenceA . snd $ mapAccumR go False xs
       where
         x' = P.notFollowedBy sep *> P.try x
 
--- parseInput :: CharParser Input
+parseInput :: CharParser Input
 parseInput = do
-    rules <- sepEndByLines $ (,) pDecimal pDecimal `sequenceSepBy` "|"
-    P.newline
+    rules <- sepEndByLines $ V2 pDecimal pDecimal `sequenceSepBy` "|"
+    _ <- P.newline
     pages <- sepByLines $ pDecimal `sepBy'` ","
     pure (rules, pages)
 
 partI :: IO ()
 partI = do
     test <- readFile "data/2024/test-day5.txt"
-    P.parseTest parseInput test
+    -- P.parseTest parseInput test
+    print test
