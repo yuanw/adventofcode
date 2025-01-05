@@ -1,6 +1,10 @@
 module Y2024.Day5 where
 
+import Data.Containers.ListUtils (nubOrd)
+import Data.Foldable (Foldable (toList))
+import Data.Graph.Inductive qualified as G
 import Data.Map qualified as M
+import Data.Set qualified as S
 import Data.Traversable
 import Data.Void (Void)
 import Linear.V2 (V2 (..))
@@ -49,6 +53,14 @@ parseInput = do
     _ <- P.newline
     pages <- sepByLines $ pDecimal `sepBy'` ","
     pure (rules, pages)
+
+sortByRules :: [V2 Int] -> [Int] -> [Int]
+sortByRules rules = \xs ->
+    G.topsort . G.nfilter (`S.member` S.fromList xs) $ rulesGraph
+  where
+    rulesGraph :: G.Gr () ()
+    rulesGraph =
+        G.mkUGraph (nubOrd $ foldMap toList rules) [(x, y) | V2 x y <- rules]
 
 partI :: IO ()
 partI = do
