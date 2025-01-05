@@ -54,15 +54,25 @@ parseRule = do
     b <- pDecimal
     pure (a, b)
 
-parseInput :: CharParser Input
+parseInput :: CharParser ([(Int, Int)], [[Int]])
 parseInput = do
     rules <- sepEndByLines parseRule
     _ <- P.newline
     pages <- sepByLines $ pDecimal `sepBy'` ","
     pure (rules, pages)
 
-sortFirst :: Input -> [([Int], [Int])]
+parseInput' :: CharParser ([V2 Int], [[Int]])
+parseInput' = do
+    rules <- sepEndByLines $ V2 pDecimal pDecimal `sequenceSepBy` "|"
+    _ <- P.newline
+    pages <- sepByLines $ pDecimal `sepBy'` ","
+    pure (rules, pages)
+
+sortFirst :: ([(Int, Int)], [[Int]]) -> [([Int], [Int])]
 sortFirst (rules, pages) = [(sortByRules rules page, page) | page <- pages]
+
+sortFirst' :: ([V2 Int], [[Int]]) -> [([Int], [Int])]
+sortFirst' (rules, pages) = [(sortByRules' rules page, page) | page <- pages]
 
 sortByRules :: [(Int, Int)] -> [Int] -> [Int]
 sortByRules rules = \xs ->
@@ -72,7 +82,16 @@ sortByRules rules = \xs ->
     rulesGraph =
         G.mkUGraph (nubOrd $ foldMap toList rules) rules
 
+sortByRules' :: [V2 Int] -> [Int] -> [Int]
+sortByRules' rules = \xs ->
+    G.topsort . G.nfilter (`S.member` S.fromList xs) $ rulesGraph
+  where
+    rulesGraph :: G.Gr () ()
+    rulesGraph =
+        G.mkUGraph (nubOrd $ foldMap toList rules) [(x, y) | V2 x y <- rules]
+
 partI :: IO ()
 partI = do
     test <- readFile "data/2024/test-day5.txt"
+    P.parseTest (sortFirst' <$> parseInput') test
     P.parseTest (sortFirst <$> parseInput) test
