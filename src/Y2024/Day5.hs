@@ -14,7 +14,7 @@ import Text.Megaparsec.Char.Lexer qualified as PL
 
 type CharParser = P.Parsec Void String
 
-type Input = ([V2 Int], [[Int]])
+type Input = ([(Int, Int)], [[Int]])
 
 -- | 'sepEndBy' but automatically exclude the separator from the internal parser
 sepEndBy' :: (P.Stream s, Ord e) => P.Parsec e s a -> P.Parsec e s sep -> P.Parsec e s [a]
@@ -47,22 +47,32 @@ sequenceSepBy xs sep = sequenceA . snd $ mapAccumR go False xs
       where
         x' = P.notFollowedBy sep *> P.try x
 
+parseRule :: CharParser (Int, Int)
+parseRule = do
+    a <- pDecimal
+    P.char '|'
+    b <- pDecimal
+    pure (a, b)
+
 parseInput :: CharParser Input
 parseInput = do
-    rules <- sepEndByLines $ V2 pDecimal pDecimal `sequenceSepBy` "|"
+    rules <- sepEndByLines parseRule
     _ <- P.newline
     pages <- sepByLines $ pDecimal `sepBy'` ","
     pure (rules, pages)
 
-sortByRules :: [V2 Int] -> [Int] -> [Int]
+sortFirst :: Input -> [([Int], [Int])]
+sortFirst (rules, pages) = [(sortByRules rules page, page) | page <- pages]
+
+sortByRules :: [(Int, Int)] -> [Int] -> [Int]
 sortByRules rules = \xs ->
     G.topsort . G.nfilter (`S.member` S.fromList xs) $ rulesGraph
   where
     rulesGraph :: G.Gr () ()
     rulesGraph =
-        G.mkUGraph (nubOrd $ foldMap toList rules) [(x, y) | V2 x y <- rules]
+        G.mkUGraph (nubOrd $ foldMap toList rules) rules
 
 partI :: IO ()
 partI = do
     test <- readFile "data/2024/test-day5.txt"
-    P.parseTest parseInput test
+    P.parseTest (sortFirst <$> parseInput) test
