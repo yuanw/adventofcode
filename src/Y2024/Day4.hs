@@ -1,7 +1,5 @@
 module Y2024.Day4 where
 
-import Data.Map qualified as M
-
 type Grid = [String]
 
 data Direction = North | NorthEast | East | EastSouth | South | SouthWest | West | NorthWest deriving (Show, Enum)
