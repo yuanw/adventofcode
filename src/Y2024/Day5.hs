@@ -1,13 +1,13 @@
 module Y2024.Day5 where
 
 import Data.Containers.ListUtils (nubOrd)
-import Data.Foldable (Foldable (toList))
+
 import Data.Graph.Inductive qualified as G
-import Data.Map qualified as M
+
 import Data.Set qualified as S
 import Data.Traversable
 import Data.Void (Void)
-import Linear.V2 (V2 (..))
+
 import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as P
 import Text.Megaparsec.Char.Lexer qualified as PL
@@ -62,7 +62,10 @@ parseInput = do
     pure (rules, pages)
 
 sorts :: ([(Int, Int)], [[Int]]) -> Int
-sorts (rules, pages) = sum [findMid page | page <- pages, sortByRules rules pages == pages]
+sorts (rules, pages) = sum [maybe 0 id (findMid page) | page <- pages, (sortByRules rules page) == page]
+
+sorts' :: ([(Int, Int)], [[Int]]) -> Int
+sorts' (rules, pages) = sum [maybe 0 id (findMid sorted) | page <- pages, let sorted = sortByRules rules page, sorted /= page]
 
 findMid :: [a] -> Maybe a
 findMid [] = Nothing
@@ -78,5 +81,10 @@ sortByRules rules = \xs ->
 
 partI :: IO ()
 partI = do
-    test <- readFile "data/2024/test-day5.txt"
+    test <- readFile "data/2024/day5.txt"
     P.parseTest (sorts <$> parseInput) test
+
+partII :: IO ()
+partII = do
+    test <- readFile "data/2024/day5.txt"
+    P.parseTest (sorts' <$> parseInput) test
