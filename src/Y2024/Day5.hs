@@ -61,18 +61,12 @@ parseInput = do
     pages <- sepByLines $ pDecimal `sepBy'` ","
     pure (rules, pages)
 
-parseInput' :: CharParser ([V2 Int], [[Int]])
-parseInput' = do
-    rules <- sepEndByLines $ V2 pDecimal pDecimal `sequenceSepBy` "|"
-    _ <- P.newline
-    pages <- sepByLines $ pDecimal `sepBy'` ","
-    pure (rules, pages)
+sorts :: ([(Int, Int)], [[Int]]) -> [([Int], [Int])]
+sorts (rules, pages) = [(sortByRules rules page, page) | page <- pages]
 
-sortFirst :: ([(Int, Int)], [[Int]]) -> [([Int], [Int])]
-sortFirst (rules, pages) = [(sortByRules rules page, page) | page <- pages]
-
-sortFirst' :: ([V2 Int], [[Int]]) -> [([Int], [Int])]
-sortFirst' (rules, pages) = [(sortByRules' rules page, page) | page <- pages]
+findMid :: [a] -> Maybe a
+findMid [] = Nothing
+findMid xs = let i = (length xs) `div` 2 in Just (xs !! i)
 
 sortByRules :: [(Int, Int)] -> [Int] -> [Int]
 sortByRules rules = \xs ->
@@ -80,18 +74,9 @@ sortByRules rules = \xs ->
   where
     rulesGraph :: G.Gr () ()
     rulesGraph =
-        G.mkUGraph (nubOrd $ foldMap toList rules) rules
-
-sortByRules' :: [V2 Int] -> [Int] -> [Int]
-sortByRules' rules = \xs ->
-    G.topsort . G.nfilter (`S.member` S.fromList xs) $ rulesGraph
-  where
-    rulesGraph :: G.Gr () ()
-    rulesGraph =
-        G.mkUGraph (nubOrd $ foldMap toList rules) [(x, y) | V2 x y <- rules]
+        G.mkUGraph (nubOrd $ foldMap (\(a, b) -> [a, b]) rules) rules
 
 partI :: IO ()
 partI = do
     test <- readFile "data/2024/test-day5.txt"
-    P.parseTest (sortFirst' <$> parseInput') test
-    P.parseTest (sortFirst <$> parseInput) test
+    P.parseTest (sorts <$> parseInput) test
