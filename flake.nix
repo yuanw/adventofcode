@@ -7,8 +7,6 @@
     flake-root.url = "github:srid/flake-root";
 
     rust-overlay.url = "github:oxalica/rust-overlay";
-    crane.url = "github:ipetkov/crane";
-    crane.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     pre-commit = {
@@ -98,7 +96,6 @@
             config.haskellProjects.default.outputs.devShell
           ];
           buildInputs = [
-            pkgs.rust-bin.beta.latest.default
           ];
         };
         packages.default = config.packages.aoc;

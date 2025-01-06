@@ -61,8 +61,8 @@ parseInput = do
     pages <- sepByLines $ pDecimal `sepBy'` ","
     pure (rules, pages)
 
-sorts :: ([(Int, Int)], [[Int]]) -> [([Int], [Int])]
-sorts (rules, pages) = [(sortByRules rules page, page) | page <- pages]
+sorts :: ([(Int, Int)], [[Int]]) -> Int
+sorts (rules, pages) = sum [findMid page | page <- pages, sortByRules rules pages == pages]
 
 findMid :: [a] -> Maybe a
 findMid [] = Nothing
