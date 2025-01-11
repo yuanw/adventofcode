@@ -29,7 +29,6 @@ common shared
   --   relude
 
   default-extensions:
-    NoStarIsType
     BangPatterns
     ConstraintKinds
     DataKinds
@@ -55,6 +54,7 @@ common shared
     LambdaCase
     MultiParamTypeClasses
     MultiWayIf
+    NoStarIsType
     NumericUnderscores
     OverloadedStrings
     PolyKinds
@@ -115,10 +115,30 @@ common shared
     Y2023.Day8
     Y2023.Day9
     Y2024.Day1
+    Y2024.Day10
+    Y2024.Day11
+    Y2024.Day12
+    Y2024.Day13
+    Y2024.Day14
+    Y2024.Day15
+    Y2024.Day16
+    Y2024.Day17
+    Y2024.Day18
+    Y2024.Day19
     Y2024.Day2
+    Y2024.Day20
+    Y2024.Day21
+    Y2024.Day22
+    Y2024.Day23
+    Y2024.Day24
+    Y2024.Day25
     Y2024.Day3
     Y2024.Day4
     Y2024.Day5
+    Y2024.Day6
+    Y2024.Day7
+    Y2024.Day8
+    Y2024.Day9
 
 --     Y2021.Day10
 --     Y2021.Day11
