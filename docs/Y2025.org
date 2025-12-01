@@ -87,3 +87,30 @@ readTuple = fromJust . fmap (second read) . uncons
   - Point-free style with multi-parameter functions requires careful thinking about currying
   - Function composition f . g works when g's output type matches f's input type
   - When types don't align for composition, making parameters explicit is the clearest solution
+
+
+  ⏺ ✅ Build successful! Fixed the bug in the accum function.
+
+  What was wrong:
+  1. foldr processes right-to-left - This meant rotations were applied in reverse order
+  2. Parameter order - foldr and foldl have opposite parameter orders in their lambda functions
+
+  The fix:
+  -- Before (wrong - processes backwards):
+  foldr (\(d, n) (acc, count) -> ...) (start, 0)
+
+  -- After (correct - processes forwards):
+  foldl (\(acc, count) (d, n) -> ...) (start, 0)
+
+  With your test data starting at 50:
+  - L68: 50 - 68 = -18
+  - L30: -18 - 30 = -48
+  - R48: -48 + 48 = 0 ✓ (count increments!)
+  - L5: 0 - 5 = -5
+
+  Now the count will increment correctly when passing through 0 or multiples of 100.
+
+  ★ Insight ─────────────────────────────────────
+  - foldr: lambda is \element accumulator -> ..., processes right-to-left
+  - foldl: lambda is \accumulator element -> ..., processes left-to-right
+  - For sequential operations where order matters (like applying rotations), use foldl
