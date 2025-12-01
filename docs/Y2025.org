@@ -58,3 +58,32 @@ we need to turn "L68" -> ("L", 68)
 
 readTuple :: String ->  (Char, Int)
 readTuple = fromJust . fmap (second read) . uncons
+
+
+  -- What you tried (doesn't work):
+  -- let a ::Int = 101, b ::Int= 100 :: Int; a `mod` b
+
+  -- Correct version 1 (semicolons):
+  let a :: Int; a = 101; b :: Int; b = 100 in a `mod` b
+
+  -- Correct version 2 (inline annotations):
+  let a = 101 :: Int; b = 100 :: Int in a `mod` b
+
+
+    What was wrong:
+  The type signature indicated accum takes two parameters (Int -> [(Char, Int)] -> Int), but the point-free implementation tried to compose functions incorrectly. You can't compose foldr (...) (which
+  returns a multi-parameter function) with a single-parameter lambda using ..
+
+  The fix:
+  -- Before (broken):
+  accum = (let a :: Int = 100 in \(x) -> x `mod` a) . foldr (\(d,n) acc -> ...)
+
+  -- After (working):
+  accum start xs = (let a :: Int = 100 in \x -> x `mod` a) (foldr (\(d, n) acc -> ...) start xs)
+
+  Made the parameters start and xs explicit, then applied the result of foldr to the lambda.
+
+  ★ Insight ─────────────────────────────────────
+  - Point-free style with multi-parameter functions requires careful thinking about currying
+  - Function composition f . g works when g's output type matches f's input type
+  - When types don't align for composition, making parameters explicit is the clearest solution
