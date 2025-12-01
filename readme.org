@@ -7,3 +7,15 @@ https://github.com/topics/advent-of-code-2022?l=haskell
 - https://github.com/mstksg/advent-of-code-2021
 - https://github.com/Tritlo/AdventOfCode2021
 - https://github.com/RossPaterson/advent-of-code/tree/main/2021
+
+* Run haskell test
+
+cabal update
+cabal test --enable-tests
+
+
+or
+
+cabal v1-test
+
+https://discourse.nixos.org/t/hspec-discover-not-available-in-shell/45563/2
