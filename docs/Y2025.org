@@ -1,0 +1,60 @@
+* Day 1
+** Haskell
+
+we need to turn "L68" -> ("L", 68)
+
+> how to apply two functions for a tuple of 2 in haskell
+
+⏺ There are several elegant ways to apply two functions to a tuple in Haskell:
+
+  Using Control.Arrow operators
+
+  The *** operator - applies different functions to each element:
+  import Control.Arrow ((***))
+
+  -- Apply f to first element, g to second element
+  (+1) *** (*2) $ (3, 4)  -- (4, 8)
+
+  -- Real example from AoC-style code
+  (read :: String -> Int) *** length $ ("42", "hello")  -- (42, 5)
+
+  The &&& operator - applies two functions to the same input and creates a tuple:
+  import Control.Arrow ((&&&))
+
+  -- Your code already uses this pattern in Y2023/Day1.hs!
+  readInt = (\(x, y) -> x * 10 + y) . (readFromLeft &&& readFromRight)
+
+  -- Another example
+  (+1) &&& (*2) $ 5  -- (6, 10)
+
+  Using Data.Bifunctor
+
+  The bimap function - applies functions to both elements:
+  import Data.Bifunctor (bimap)
+
+  bimap (+1) (*2) (3, 4)  -- (4, 8)
+  bimap read length ("42", "hello")  -- (42, 5)
+
+  The first and second functions - apply to one element only:
+  import Data.Bifunctor (first, second)
+
+  first (+1) (3, 4)   -- (4, 4)
+  second (*2) (3, 4)  -- (3, 8)
+
+  Pattern Matching (manual approach)
+
+  applyBoth :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)
+  applyBoth f g (x, y) = (f x, g y)
+
+  applyBoth (+1) (*2) (3, 4)  -- (4, 8)
+
+  ★ Insight ─────────────────────────────────────
+  - *** (from Arrow) and bimap (from Bifunctor) are functionally equivalent for tuples
+  - Your codebase already uses Arrow operators - see Y2023/Day1.hs:22 where &&& combines two parsing functions
+  - The Arrow operators are more concise in point-free style: map (f *** g) vs map (bimap f g)
+
+
+
+
+readTuple :: String ->  (Char, Int)
+readTuple = fromJust . fmap (second read) . uncons
