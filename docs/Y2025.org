@@ -432,3 +432,249 @@ Delete these duplicate/confusing parts:
   ─────────────────────────────────────────────────
 
   The solution now runs instantly instead of timing out on large ranges!
+
+  ⏺ Entered plan mode
+
+  Claude is now exploring and designing an implementation approach.
+
+⏺ Read(docs/day2.org)
+  ⎿  Read 64 lines
+
+⏺ Read(src/Y2025/Day2.hs)
+  ⎿  Read 62 lines
+
+⏺ Perfect! I can see Part II extends Part I:
+
+  Part I: Numbers where digit sequence repeats exactly twice (e.g., 1010, 123123)
+  Part II: Numbers where digit sequence repeats at least twice (e.g., 111, 565656, 2121212121)
+
+  Let me design the solution:
+
+⏺ Plan(Plan Day2 Part II solution)
+  ⎿  Done (19 tool uses · 36.5k tokens · 59s)
+
+⏺ Updated plan
+  ⎿  /plan to preview · ~/.claude/plans/mellow-imagining-hedgehog.md
+
+⏺ Perfect! I've created a comprehensive implementation plan for Y2025.Day2 Part II. The plan outlines:
+
+  1. Core Algorithm: Detect if a number's digit string can be formed by repeating a pattern k≥2 times using divisor-based checking
+  2. Efficient Generation: Instead of checking every number, generate only invalid candidates by:
+    - For each total length L, find all proper divisors d
+    - Generate d-digit patterns and repeat them L/d times
+    - Filter by range
+  3. Key Functions:
+    - properDivisors - helper to find divisors
+    - invalidPartII - validation for testing
+    - generateInvalidsPartII - efficient generation
+    - partII - main solution
+  4. Testing Strategy: Verify against examples from docs (expected sum: 4174379265)
+
+  The approach extends Part I's efficient generation while handling all repetition counts (not just exactly 2).
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/mellow-imagining-hedgehog.md · /plan to edit
+     Y2025.Day2 Part II Implementation Plan - Repeating Patterns
+
+     Problem Summary
+
+     Part I (already implemented): Find invalid IDs where digit sequence repeats exactly twice
+     - Examples: 11, 6464, 123123
+     - Efficiently generates candidates using pattern duplication
+
+     Part II (new requirement): Find invalid IDs where digit sequence repeats at least twice
+     - New examples: 111 (1×3), 999 (9×3), 565656 (56×3), 824824824 (824×3), 2121212121 (21×5)
+     - Must detect if digit string can be formed by repeating ANY substring
+
+     Goal: Extend Part I's efficient generation approach to handle k≥2 repetitions.
+
+     Core Algorithm: Pattern Detection
+
+     Mathematical Insight
+
+     A number is invalid if its digit string equals pattern^k where k ≥ 2.
+
+     For a string of length n:
+     1. Find all proper divisors d of n (where d < n)
+     2. For each divisor d, check if repeating first d characters n/d times gives the full string
+     3. If any divisor works, the number is invalid
+
+     Example: "565656" (length 6)
+     - Divisors: 1, 2, 3
+     - d=1: "5"×6 = "555555" ✗
+     - d=2: "56"×3 = "565656" ✓ → invalid!
+
+     Generation vs Checking
+
+     Approach 1: Check every number (slow)
+     invalidPartII :: Int -> Bool
+     invalidPartII n = any isRepeatingPattern (properDivisors len)
+       where str = show n; len = length str
+
+     Approach 2: Generate only invalid candidates (fast)
+     generateInvalidsPartII :: (Int, Int) -> [Int]
+     -- For each length L, for each divisor d of L:
+     --   Generate all d-digit patterns, repeat L/d times
+
+     Decision: Use generation for efficiency, keep validation for testing.
+
+     Implementation Structure
+
+     1. Helper Function - Proper Divisors
+
+     properDivisors :: Int -> [Int]
+     properDivisors n = [d | d <- [1 .. n - 1], n `mod` d == 0]
+
+     2. Validation Function (for testing)
+
+     import Data.List.Split (chunksOf)  -- already imported
+
+     invalidPartII :: Int -> Bool
+     invalidPartII n = any isRepeatingPattern (properDivisors len)
+       where
+         str = show n
+         len = length str
+         isRepeatingPattern patLen =
+             let pattern = take patLen str
+                 chunks = chunksOf patLen str
+             in all (== pattern) chunks
+
+     3. Generation Function (primary)
+
+     generateInvalidsPartII :: (Int, Int) -> [Int]
+     generateInvalidsPartII (start, end) =
+         nub $ sort $ concatMap genForLength [minLen .. maxLen]
+       where
+         minLen = length (show start)
+         maxLen = length (show end)
+
+         genForLength len =
+             concatMap (genForLengthAndDiv len) (properDivisors len)
+
+         genForLengthAndDiv totalLen patternLen =
+             let repetitions = totalLen `div` patternLen
+                 minPattern = 10 ^ (patternLen - 1)
+                 maxPattern = 10 ^ patternLen - 1
+                 makeNum p = read (concat (replicate repetitions (show p)))
+             in filter (\n -> n >= start && n <= end)
+                       [makeNum p | p <- [minPattern .. maxPattern]]
+
+     4. Main Solution
+
+     partII :: IO ()
+     partII = do
+         ranges <- parseRanges <$> readFile "data/2025/day2/input.txt"
+         print $ sum $ concatMap generateInvalidsPartII ranges
+
+     Edge Cases to Handle
+
+     1. Leading zeros: Pattern generation starts at 10^(d-1), naturally avoiding 0-prefixed patterns
+     2. Duplicate candidates: Use nub since different divisors might generate same number
+     3. Single digit patterns: d=1 creates numbers like 111, 999 - valid!
+     4. Part I compatibility: Part II includes all Part I invalids (where d = n/2)
+
+     Testing Strategy
+
+     Test with examples from docs (Part II adds these invalids vs Part I):
+
+     | Range                 | Part I | Part II    | New in Part II |
+     |-----------------------|--------|------------|----------------|
+     | 11-22                 | 11, 22 | 11, 22     | (none)         |
+     | 95-115                | 99     | 99, 111    | 111            |
+     | 998-1012              | 1010   | 999, 1010  | 999            |
+     | 565653-565659         | (none) | 565656     | 565656         |
+     | 824824821-824824827   | (none) | 824824824  | 824824824      |
+     | 2121212118-2121212124 | (none) | 2121212121 | 2121212121     |
+
+     Full example sum: 4174379265
+
+     Test Cases
+
+     describe "invalidPartII" $ do
+         it "detects exactly-twice repetition" $
+             invalidPartII 1010 `shouldBe` True
+
+         it "detects triple repetition" $
+             invalidPartII 111 `shouldBe` True
+
+         it "detects long repetition" $
+             invalidPartII 2121212121 `shouldBe` True
+
+         it "rejects non-repeating" $
+             invalidPartII 123 `shouldBe` False
+
+     Performance Comparison
+
+     Part I: For even length L, generates ~10^(L/2) candidates
+     Part II: For length L with k divisors, generates ~k × 10^(L/k) candidates
+
+     Example for 6-digit range:
+     - Part I: ~1000 candidates (3-digit patterns × 1 length)
+     - Part II: ~1000 + ~100 + ~10 = ~1110 candidates (divisors 3, 2, 1)
+
+     Still vastly better than brute-force checking millions of numbers!
+
+     Files to Modify
+
+     - src/Y2025/Day2.hs: Add properDivisors, invalidPartII, generateInvalidsPartII, partII
+     - data/2025/day2/test.txt: Already has test data
+
+     Implementation Order
+
+     1. Add properDivisors helper function
+     2. Add invalidPartII validation function
+     3. Add generateInvalidsPartII generation function
+     4. Add partII main function
+     5. Test with example input (expected: 4174379265)
+     6. Run on actual input
+     7. Verify build succeeds
+
+     Success Criteria
+
+     - Produces correct answer for test example: 4174379265
+     - Runs efficiently on actual input
+     - All new invalids from Part II are detected
+     - Part I solution still works correctly
+
+ Great question! Let me provide an insight about deduplication strategies and their performance characteristics.
+
+  ★ Insight ─────────────────────────────────────
+  Deduplication Performance Trade-offs:
+
+  1. nub . sort (current approach):
+    - sort is O(n log n)
+    - nub on sorted input is O(n) (linear scan)
+    - Total: O(n log n)
+    - Simple, uses only base libraries
+  2. Set approach:
+    - Set.fromList is O(n log n)
+    - Set.toList is O(n)
+    - Total: O(n log n)
+    - Cleaner semantics, guaranteed complexity
+    - Automatically maintains sorted order
+  3. Map approach:
+    - Would work but unnecessary (Map stores key-value pairs)
+    - Set is the right data structure for unique values
+  ─────────────────────────────────────────────────
+
+  For this problem, both approaches have the same asymptotic complexity: O(n log n). However, Set has several advantages:
+
+  1. Cleaner semantics: Set explicitly represents "unique elements"
+  2. Guaranteed complexity: nub on unsorted input is O(n²), Set is always O(n log n)
+  3. More idiomatic: Using Set signals intent more clearly
+
+  Here's what the refactored version would look like:
+
+  import qualified Data.Set as Set
+
+  generateInvalidsPartII :: (Int, Int) -> [Int]
+  generateInvalidsPartII (start, end) =
+      Set.toList $ Set.fromList $ concatMap genForLength [minLen .. maxLen]
+    where
+      -- ... rest unchanged
+
+  Should you change it? For this problem with small candidate sets (typically < 10,000 numbers), the performance difference is negligible. The current nub . sort approach works perfectly fine.
+
+  However, if you value code clarity and want to be explicit about deduplication, switching to Set would be a good choice. It's a matter of style preference rather than performance necessity here.
+
+  Would you like me to refactor it to use Set, or are you satisfied with the current implementation?
