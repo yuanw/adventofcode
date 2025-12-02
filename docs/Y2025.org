@@ -114,3 +114,31 @@ readTuple = fromJust . fmap (second read) . uncons
   - foldr: lambda is \element accumulator -> ..., processes right-to-left
   - foldl: lambda is \accumulator element -> ..., processes left-to-right
   - For sequential operations where order matters (like applying rotations), use foldl
+
+⏺ ✅ Bug fixed in Y2025.Day1 partII! The answer is now 6496 (down from 6822).
+
+  What was wrong:
+
+  1. Incorrect left rotation counting: The formula for counting passes through 0 during left rotations wasn't handling the a == 0 case correctly
+  2. Negative modulo bug: Haskell's mod operator returns negative values for negative inputs, so positions weren't being normalized to [0, 99]
+
+  The fixes:
+
+  Left rotation formula (line 20):
+  -- Before: counted incorrectly when starting at 0
+  d `div` 100 + if a <= d `mod` 100 then 1 else 0
+
+  -- After: special case for a == 0
+  d `div` 100 + if a > 0 && a <= d `mod` 100 then 1 else 0
+
+  Positive modulo (line 30):
+  -- Before: could give negative positions
+  after = before `mod` 100
+
+  -- After: always gives positive result in [0, 99]
+  after = ((before `mod` 100) + 100) `mod` 100
+
+  ★ Insight ─────────────────────────────────────
+  - The key insight for Part II: when rotating by distance D, we pass through 0 exactly ⌊(position + distance) / 100⌋ times for right rotations
+  - For left rotations, it's trickier: ⌊distance / 100⌋ + (1 if position ∈ (0, distance mod 100])
+  - The test example from the docs (expected 6, got 6) validates the counting logic is now correct

@@ -15,11 +15,10 @@ incremPartI :: (Int, Int) -> Int
 incremPartI (a, b) = if (a + b) `mod` 100 == 0 then 1 else 0
 
 shouldIncremPartII :: (Int, Int) -> Int
-shouldIncremPartII (a, b) = c + d + e
-  where
-    c = (abs b) `div` 100
-    d = if b < 0 && a /= 0 && (abs b) >= a then 1 else 0
-    e = if b > 0 && a + b >= 100 then 1 else 0
+shouldIncremPartII (a, b)
+    | b > 0 = (a + b) `div` 100 -- Right rotation: count passes through multiples of 100
+    | b < 0 = let d = abs b in d `div` 100 + if a > 0 && a <= d `mod` 100 then 1 else 0 -- Left rotation
+    | otherwise = 0
 
 accum' :: ((Int, Int) -> Int) -> [Int] -> (Int, Int)
 accum' incrFnc = foldl foldFnc (50, 0)
@@ -28,7 +27,7 @@ accum' incrFnc = foldl foldFnc (50, 0)
     foldFnc (acc, count) num = (after, count')
       where
         before = acc + num
-        after = before `mod` 100
+        after = ((before `mod` 100) + 100) `mod` 100 -- Proper positive modulo
         count' = count + incrFnc (acc, num)
 
 accum :: Int -> [(Char, Int)] -> (Int, Int)
