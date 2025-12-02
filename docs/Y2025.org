@@ -142,6 +142,255 @@ readTuple = fromJust . fmap (second read) . uncons
   - The key insight for Part II: when rotating by distance D, we pass through 0 exactly ⌊(position + distance) / 100⌋ times for right rotations
   - For left rotations, it's trickier: ⌊distance / 100⌋ + (1 if position ∈ (0, distance mod 100])
   - The test example from the docs (expected 6, got 6) validates the counting logic is now correct
+
+    # Y2025.Day1 Refactoring Plan - Cleaner Safe Dial Solution
+
+## Problem Summary
+
+The current Y2025.Day1 solution works but has significant issues:
+- **Duplicate implementations**: Has both `accum` and `accum'` functions doing similar things
+- **Confusing counting logic**: `shouldIncremPartII` is hard to verify and understand
+- **Backwards math approach**: Applies modulo AFTER counting instead of tracking actual positions
+- **Poor code organization**: Mixed concerns, unclear function responsibilities
+
+**Goal**: Refactor to a clean, testable, easy-to-understand solution.
+
+## Problem Requirements Recap
+
+**Safe dial mechanics**:
+- Dial numbered 0-99 (circular)
+- Starts at position 50
+- L = rotate left (decrease), R = rotate right (increase)
+
+**Part I**: Count times dial **ends at** 0 or multiples of 100 after rotation
+**Part II**: Count **all times** dial passes through 0 or multiples of 100 (including during rotation)
+
+**Example (Part II)**:
+- From 50, rotate L68 → passes through 0 once → ends at 82
+- From 50, rotate R1000 → passes through 0 ten times → ends back at 50
+
+## Core Algorithm: Count Crossings Directly
+
+### Key Mathematical Insight
+
+When rotating from position `a` by distance `d`:
+1. We're traveling through interval `[a, a+d]` (or `[a+d, a]` if negative)
+2. Count how many multiples of 100 exist in this interval
+3. Then normalize final position to [0, 99]
+
+**For right rotation (d > 0)**: Count multiples of 100 in `(a, a+d]`
+- First multiple: `(a ÷ 100 + 1) × 100`
+- Last multiple: `⌊(a+d) ÷ 100⌋ × 100`
+- Count: `max(0, ⌊(a+d) ÷ 100⌋ - ⌊a ÷ 100⌋)`
+
+**For left rotation (d < 0)**: Count multiples of 100 in `[a+d, a)`
+- Similar logic but reversed
+- Count: `max(0, ⌊a ÷ 100⌋ - ⌊(a+d) ÷ 100⌋)`
+
+## Implementation Structure
+
+### 1. Core Counting Function
+```haskell
+-- Count crossings through multiples of 100
+countCrossings :: Int -> Int -> Int
+countCrossings pos dist
+    | dist > 0 = (pos + dist) `div` 100 - pos `div` 100
+    | dist < 0 = pos `div` 100 - (pos + dist) `div` 100
+    | otherwise = 0
+```
+
+### 2. Part-Specific Counting
+```haskell
+-- Part I: Only count if final position is multiple of 100
+countPartI :: Int -> Int -> Int
+countPartI pos dist = if (pos + dist) `mod` 100 == 0 then 1 else 0
+
+-- Part II: Count all crossings during rotation
+countPartII :: Int -> Int -> Int
+countPartII = countCrossings
+```
+
+### 3. Unified Processing Function
+```haskell
+-- Process all rotations with given counting strategy
+processRotations :: (Int -> Int -> Int) -> [Int] -> (Int, Int)
+processRotations countFn = foldl step (50, 0)
+  where
+    step (pos, count) dist = (newPos, count + countFn pos dist)
+      where
+        newPos = ((pos + dist) `mod` 100 + 100) `mod` 100
+```
+
+### 4. Main Solutions
+```haskell
+partI :: IO ()
+partI = do
+    rotations <- map (toNumber . readTuple) . lines <$> readFile "data/2025/day1/real.txt"
+    print $ snd $ processRotations countPartI rotations
+
+partII :: IO ()
+partII = do
+    rotations <- map (toNumber . readTuple) . lines <$> readFile "data/2025/day1/real.txt"
+    print $ snd $ processRotations countPartII rotations
+```
+
+## Improvements Over Current Implementation
+
+1. **Single unified processing**: Only one `processRotations` function (vs `accum` and `accum'`)
+2. **Clear separation**: Counting logic separated from state management
+3. **Testable components**: Pure `countCrossings` function can be tested independently
+4. **Simpler math**: Direct crossing count without complex conditionals
+5. **Better names**: Functions clearly describe what they do
+
+## Position Normalization
+
+Use double-modulo pattern for proper handling of negatives:
+```haskell
+normalizePosition :: Int -> Int
+normalizePosition x = ((x `mod` 100) + 100) `mod` 100
+```
+
+This ensures `-18 → 82`, `-100 → 0`, etc.
+
+## Code to Remove
+
+Delete these duplicate/confusing parts:
+- `accum` function (line 33-34) - replaced by `processRotations`
+- `incremPartI` function - replaced by clearer `countPartI`
+- `shouldIncremPartII` function - replaced by clearer `countPartII`
+- `accum'` function - replaced by renamed `processRotations`
+
+## Testing Strategy
+
+1. **Test `countCrossings` directly**:
+   - From 50, distance 50 → crosses 100 once
+   - From 50, distance 150 → crosses 100 once, 200 once = 2
+   - From 50, distance -68 → crosses 0 once
+
+2. **Test Part I examples** (count final position only):
+   - Example sequence → expected count of 3 (from docs)
+
+3. **Test Part II examples** (count all crossings):
+   - Example sequence → expected count of 6 (from docs)
+
+4. **Edge cases**:
+   - Starting at 0
+   - Large rotations (R1000)
+   - Rotation of 0
+
+## Files to Modify
+
+- **src/Y2025/Day1.hs**: Complete refactoring with new structure
+- **test/Y2025/Day1Spec.hs**: Update tests to match new function names
+
+## Success Criteria
+
+- Produces correct answers: Part I = 1165, Part II = 6496
+- Code is significantly clearer and more maintainable
+- All functions have single, obvious responsibilities
+- No duplicate logic
+- Tests verify individual components work correctly
+
+## Implementation Order
+
+1. Add `countCrossings` function with tests
+2. Add `countPartI` and `countPartII` wrappers
+3. Rename and simplify `accum'` → `processRotations`
+4. Update `partI` and `partII` to use new functions
+5. Delete old functions (`accum`, `incremPartI`, `shouldIncremPartII`)
+6. Run tests to verify correctness
+7. Build and verify actual answers match expected
+
+
+    What Changed
+
+  Before (Complex & Confusing):
+
+  - 4 functions doing similar things: accum, accum', incremPartI, shouldIncremPartII
+  - Hard-to-verify logic: Complex conditionals for left vs right rotations
+  - Mixed concerns: Counting logic intertwined with state management
+
+  After (Clean & Clear):
+
+  - Single unified approach: One processRotations function with strategy pattern
+  - Simple math: Direct crossing count using integer division
+  - Testable components: Pure countCrossings function tested independently
+
+  Key Improvements
+
+  1. Eliminated duplicate code: Reduced from 4 functions to 3 focused functions
+  2. Simpler formula:
+    - Right: (pos + dist) ÷ 100 - pos ÷ 100
+    - Left: (pos - 1) ÷ 100 - (pos + dist - 1) ÷ 100
+  3. Better separation: Counting logic separate from state management
+  4. Comprehensive tests: 12 tests covering edge cases
+
+  Results
+
+  Part I: 1165 ✓
+  Part II: 6496 ✓
+  All tests pass: 12/12 ✓
+
+  ★ Insight ─────────────────────────────────────
+  - The key mathematical insight: counting multiples of 100 in an interval is just ⌊end/100⌋ - ⌊start/100⌋
+  - For left rotations, the -1 adjustment ensures we count the interval [pos+dist, pos) correctly
+  - The strategy pattern (processRotations taking a counting function) makes it easy to swap between Part I and Part II logic
+
+    > would use `rem` make code better
+
+⏺ Good question! Let me analyze whether rem would improve the code:
+
+  Current Code Uses mod and div
+
+  newPos = ((pos + dist) `mod` 100 + 100) `mod` 100
+
+  countCrossings pos dist
+      | dist > 0 = (pos + dist) `div` 100 - pos `div` 100
+
+  Key Difference Between mod/div vs rem/quot
+
+  For negative numbers:
+  - mod/div: Round towards negative infinity (Euclidean division)
+    - (-18) mod 100 = 82
+    - (-18) div 100 = -1
+  - rem/quot: Truncate towards zero
+    - (-18) rem 100 = -18
+    - (-18) quot 100 = 0
+
+  Analysis
+
+  Position Normalization (Line 36)
+
+  Using rem would break the code:
+  -- Current (correct):
+  ((−18 `mod` 100) + 100) `mod` 100 = (82 + 100) `mod` 100 = 82 ✓
+
+  -- With rem (wrong):
+  ((−18 `rem` 100) + 100) `rem` 100 = (−18 + 100) `rem` 100 = 82 ✓
+
+  Actually, both work here! But mod is clearer because it's the standard mathematical modulo operation.
+
+  Counting Crossings (Lines 20-21)
+
+  Using quot would break the counting logic:
+  -- From pos=50, dist=-68 → crosses 0 once
+  -- Current (correct):
+  (50 - 1) `div` 100 - (-18 - 1) `div` 100 = 0 - (-1) = 1 ✓
+
+  -- With quot (wrong):
+  (50 - 1) `quot` 100 - (-18 - 1) `quot` 100 = 0 - 0 = 0 ✗
+
+  Verdict
+
+  No, using rem would not make the code better. In fact, it would break the counting logic.
+
+  Why mod/div are correct here:
+  1. Mathematically intuitive: mod gives proper modulo arithmetic
+  2. Handles negatives correctly: div rounds towards negative infinity, which is what we need for counting crossings
+  3. Standard idiom: The double-modulo pattern ((x modn) + n)mod n is well-known for normalizing to [0, n)
+
+  The current code is optimal for this problem!
+  
 * Day 2
 
    ghci -e "let invalid n = let str = show n; l = length str - 1; half = length str \`div\` 2 in [str !! i | i <- [0 .. half - 1]] == [str !! j | j <- [half .. l]]; main = mapM_ print [(i, invalid i) | i <-

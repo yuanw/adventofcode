@@ -1,6 +1,10 @@
 module Main where
 
-import Y2025.Day2 (partI)
+import Y2025.Day1 (partI, partII)
 
 main :: IO ()
-main = partI
+main = do
+    putStrLn "Part I:"
+    partI
+    putStrLn "\nPart II:"
+    partII

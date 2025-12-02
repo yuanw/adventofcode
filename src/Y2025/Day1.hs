@@ -4,6 +4,7 @@ import Control.Arrow (second)
 import Data.List (uncons)
 import Data.Maybe (fromJust)
 
+-- Input parsing
 readTuple :: String -> (Char, Int)
 readTuple = second read . fromJust . uncons
 
@@ -11,35 +12,37 @@ toNumber :: (Char, Int) -> Int
 toNumber ('L', n) = negate n
 toNumber (_, n) = n
 
-incremPartI :: (Int, Int) -> Int
-incremPartI (a, b) = if (a + b) `mod` 100 == 0 then 1 else 0
-
-shouldIncremPartII :: (Int, Int) -> Int
-shouldIncremPartII (a, b)
-    | b > 0 = (a + b) `div` 100 -- Right rotation: count passes through multiples of 100
-    | b < 0 = let d = abs b in d `div` 100 + if a > 0 && a <= d `mod` 100 then 1 else 0 -- Left rotation
+-- Core counting logic: count crossings through multiples of 100
+-- Counts multiples in (pos, pos+dist] for positive dist, or [pos+dist, pos) for negative dist
+-- That is: exclusive of start position, inclusive of end position
+countCrossings :: Int -> Int -> Int
+countCrossings pos dist
+    | dist > 0 = (pos + dist) `div` 100 - pos `div` 100
+    | dist < 0 = (pos - 1) `div` 100 - (pos + dist - 1) `div` 100
     | otherwise = 0
 
-accum' :: ((Int, Int) -> Int) -> [Int] -> (Int, Int)
-accum' incrFnc = foldl foldFnc (50, 0)
-  where
-    foldFnc :: (Int, Int) -> Int -> (Int, Int)
-    foldFnc (acc, count) num = (after, count')
-      where
-        before = acc + num
-        after = ((before `mod` 100) + 100) `mod` 100 -- Proper positive modulo
-        count' = count + incrFnc (acc, num)
+-- Part I: Only count if final position is multiple of 100
+countPartI :: Int -> Int -> Int
+countPartI pos dist = if (pos + dist) `mod` 100 == 0 then 1 else 0
 
-accum :: Int -> [(Char, Int)] -> (Int, Int)
-accum start = foldl (\(acc, count) (d, n) -> let n' = if d == 'L' then acc - n else acc + n; b = (n' == 0 || n' `mod` 100 == 0) :: Bool in (n', count + if b then 1 else 0)) (start, 0)
+-- Part II: Count all crossings during rotation
+countPartII :: Int -> Int -> Int
+countPartII = countCrossings
+
+-- Unified processing function
+processRotations :: (Int -> Int -> Int) -> [Int] -> (Int, Int)
+processRotations countFn = foldl step (50, 0)
+  where
+    step (pos, count) dist = (newPos, count + countFn pos dist)
+      where
+        newPos = ((pos + dist) `mod` 100 + 100) `mod` 100
 
 partI :: IO ()
 partI = do
-    a <- map (toNumber . readTuple) . lines <$> readFile "data/2025/day1/real.txt"
-    print $ snd (accum' incremPartI a)
+    rotations <- map (toNumber . readTuple) . lines <$> readFile "data/2025/day1/real.txt"
+    print $ snd $ processRotations countPartI rotations
 
 partII :: IO ()
 partII = do
-    a <- map (toNumber . readTuple) . lines <$> readFile "data/2025/day1/real.txt"
-    -- print $  (accum' shouldIncremPartII [-68, -30, 48])
-    print $ snd (accum' shouldIncremPartII a)
+    rotations <- map (toNumber . readTuple) . lines <$> readFile "data/2025/day1/real.txt"
+    print $ snd $ processRotations countPartII rotations
