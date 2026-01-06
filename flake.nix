@@ -9,6 +9,11 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    lean4-nix = {
+      url = "github:lenianiva/lean4-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     pre-commit = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -87,7 +92,7 @@
         #   };
         # };
 
-        # Default shell.
+        # Default shell (Haskell).
         devShells.default = pkgs.mkShell {
           inputsFrom = [
 
@@ -98,6 +103,27 @@
           buildInputs = [
           ];
         };
+
+        # Lean 4 shell for AoC
+        devShells.lean =
+          let
+            leanPkgs = import inputs.nixpkgs {
+              inherit system;
+              overlays = [
+                (inputs.lean4-nix.readToolchainFile ./lean-toolchain)
+              ];
+            };
+          in
+          pkgs.mkShell {
+            buildInputs = [
+              leanPkgs.lean
+            ];
+            shellHook = ''
+              echo "Lean 4 development environment"
+              echo "  lean --version: $(lean --version)"
+            '';
+          };
+
         packages.default = config.packages.aoc;
       };
     };
